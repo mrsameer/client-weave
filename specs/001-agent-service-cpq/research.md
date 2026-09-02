@@ -12,11 +12,11 @@
 - Edge-only handlers: rejected because the finalization transaction and database-driver behavior matter more than edge latency.
 - Microservices: rejected because no domain needs independent scaling or ownership yet, and cross-service transactions would weaken finalization atomicity.
 
-## Decision 2: Make OpenAPI the durable interface and WebMCP a progressive adapter
+## Decision 2: Make Zod the executable contract source and WebMCP a progressive adapter
 
-**Decision**: Define strict Zod 4 schemas in code, generate JSON Schema/OpenAPI 3.1 artifacts, and expose versioned `/api/v1` operations. Register exactly the six required page tools with `document.modelContext.registerTool()` when WebMCP is available. Both the ordinary UI and WebMCP handlers call the same application use cases. Do not expose the human-confirmation endpoint as a tool. A future remote MCP server may wrap the HTTP API but is not part of this MVP.
+**Decision**: Treat strict Zod 4 schemas under `src/contracts/schemas/` as the authoritative executable contract; generate and check in JSON Schema, OpenAPI 3.1, and client artifacts from them; and expose versioned `/api/v1` operations. CI regenerates every artifact and fails on drift. Register exactly the six required page tools with `document.modelContext.registerTool()` when WebMCP is available. Both the ordinary UI and WebMCP handlers call the same application use cases. Do not expose the human-confirmation endpoint as a tool. A future remote MCP server may wrap the HTTP API but is not part of this MVP.
 
-**Rationale**: OpenAPI provides a browser-independent, testable source contract. Zod 4 can produce JSON Schema without a second schema system. WebMCP best matches the specification's same-live-page experience but remains proposed/experimental and Chrome-specific, so it cannot be the only way to complete the journey. Sources: [OpenAPI 3.1 specification](https://spec.openapis.org/oas/v3.1.0), [Zod JSON Schema](https://zod.dev/json-schema), [Chrome WebMCP](https://developer.chrome.com/docs/ai/webmcp/), [WebMCP proposal](https://github.com/webmachinelearning/webmcp), [Puppeteer WebMCP guide](https://pptr.dev/guides/webmcp).
+**Rationale**: Zod gives server handlers and adapters one executable validation source, while generated OpenAPI remains the browser-independent, testable public artifact. Generating JSON Schema, OpenAPI, and clients in one direction avoids a second independently maintained schema system. WebMCP best matches the specification's same-live-page experience but remains proposed/experimental and Chrome-specific, so it cannot be the only way to complete the journey. Sources: [OpenAPI 3.1 specification](https://spec.openapis.org/oas/v3.1.0), [Zod JSON Schema](https://zod.dev/json-schema), [Chrome WebMCP](https://developer.chrome.com/docs/ai/webmcp/), [WebMCP proposal](https://github.com/webmachinelearning/webmcp), [Puppeteer WebMCP guide](https://pptr.dev/guides/webmcp/).
 
 **Alternatives considered**:
 
@@ -38,7 +38,7 @@
 
 ## Decision 4: Use revisioned shared state and private realtime invalidations
 
-**Decision**: PostgreSQL remains authoritative. Each scope carries general, pricing, and finalization revisions. Mutations require an expected general revision and return the full current review model. After commit, the app publishes a minimal `{scopeId, revision, eventType}` message to a Supabase private Broadcast topic. TanStack Query invalidates and refetches the durable snapshot. Messages never contain secrets or full contact data.
+**Decision**: PostgreSQL remains authoritative. Each scope carries general, pricing, and finalization revisions, and every material current value (goal, budget, target delivery, each assumption, and every answer) persists server-derived actor/time provenance. Mutations of an existing draft require an expected general revision and return the full attributed review model. After commit, the app publishes a minimal `{scopeId, revision, eventType}` message to a Supabase private Broadcast topic. TanStack Query invalidates and refetches the durable snapshot. Messages never contain secrets or full contact data.
 
 **Rationale**: Bounded typed form fields need optimistic concurrency and refetch, not a CRDT. Private Broadcast supports authenticated topics across multiple stateless application instances and meets the two-second collaboration target while keeping database state authoritative. Sources: [Supabase Broadcast database changes](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes), [Supabase Realtime authorization](https://supabase.com/docs/guides/realtime/authorization), [HTTP conditional requests](https://www.rfc-editor.org/rfc/rfc9110.html#name-if-match).
 
@@ -69,7 +69,7 @@
   -> deterministic quote result
 ```
 
-Use integer minor units for money, integer basis points for percentages, a documented rounding rule, and a total rule order of owner priority followed by stable rule key. Canonicalize consumed inputs before hashing; explicitly define null/absent behavior and encode fixed decimals as strings. Persist the rule set ID/content hash, evaluator version, normalized input snapshot/hash, ordered line items, assumptions, conflicts, and totals. Retain compatibility evaluators for the quote retention period.
+Use integer minor units for money and integer basis points for percentages. Round every percentage line-item adjustment to the nearest minor currency unit with exact halves rounded away from zero, then calculate the published total by summing the individually rounded ordered line items. Apply rules by owner priority followed by stable rule key. Canonicalize consumed inputs before hashing; explicitly define null/absent behavior and encode fixed decimals as strings. Persist the rule set ID/content hash, evaluator version, normalized input snapshot/hash, ordered line items, assumptions, conflicts, and totals. Retain compatibility evaluators for the quote retention period.
 
 **Rationale**: PostgreSQL does not guarantee row order without `ORDER BY`, floating point is inexact, and `jsonb` does not preserve the original object-key order. A version-pinned pure function plus canonical inputs supports exact replay and golden/property testing. Sources: [PostgreSQL ordering](https://www.postgresql.org/docs/current/queries-order.html), [PostgreSQL numeric types](https://www.postgresql.org/docs/current/datatype-numeric.html), [PostgreSQL JSON types](https://www.postgresql.org/docs/current/datatype-json.html), [RFC 8785 JSON canonicalization](https://www.rfc-editor.org/info/rfc8785/).
 
@@ -92,7 +92,7 @@ Use integer minor units for money, integer basis points for percentages, a docum
 
 ## Decision 8: Treat confirmation as a server-authored, human-only receipt
 
-**Decision**: The server creates the exact final summary and canonical hash over scope/finalization revision, normalized material values, quote identity/fingerprint and rule version, selected slot/version, normalized minimal contact data, action, notices, and expiry. The ordinary UI displays it and records a short-lived, single-use human confirmation. This confirmation operation is not an agent tool. `finalize_confirmed_scope` accepts only an opaque confirmation ID and idempotency key; it re-derives every invariant.
+**Decision**: The server creates the exact final-summary response and canonical hash over scope/finalization revision, the complete attributed scope snapshot (including service requirements and constraints), current eligible quote identity/fingerprint, rule version, total, and line items, selected slot/version, normalized minimal contact data, action, notices, and expiry. The ordinary UI renders this response without reconstructing omitted commercial fields and records a short-lived, single-use human confirmation. This confirmation operation is not an agent tool. `finalize_confirmed_scope` accepts only an opaque confirmation ID and idempotency key; it re-derives every invariant.
 
 **Rationale**: A caller-supplied boolean or hash does not prove that the current summary was displayed and approved. Binding confirmation to significant transaction data and invalidating it after changes preserves human authority. For anonymous buyers this establishes explicit browser interaction, not cryptographic proof of a distinct human identity; stronger identity assurance is outside MVP scope. Source: [OWASP transaction authorization](https://cheatsheetseries.owasp.org/cheatsheets/Transaction_Authorization_Cheat_Sheet.html).
 
@@ -149,6 +149,18 @@ Use `READ COMMITTED` with explicit row locks and hard unique constraints. Retry 
 
 - Fly.io/Render plus standalone PostgreSQL/Auth/WebSockets: viable but adds operational ownership without improving MVP commercial correctness.
 - Develop on PostgreSQL 18 while hosting on 17: rejected because environment differences add avoidable migration and SQL risk.
+
+## Decision 13: Use transparent deterministic service matching
+
+**Decision**: Normalize the buyer need and each active service's name, description, and included items with Unicode NFKC and locale-independent lowercase, tokenize contiguous Unicode letter/number runs, and score the count of distinct overlapping tokens. Return active services ordered by eligibility first, descending overlap score second, and service slug ascending as the stable tie-breaker. Budget and approximate delivery timing contribute explicit eligibility, fit, and conflict codes but do not silently remove an active service from results.
+
+**Rationale**: A small seller catalog needs reproducible, inspectable matching rather than an opaque model ranking. Returning ineligible active services with clear budget or timing conflicts also preserves under-budget tradeoff discovery when no offering is an exact fit.
+
+## Decision 14: Use fixed pre-release validation cohorts
+
+**Decision**: Validate buyer outcomes with 10 first-time participants, owner configuration with 5 first-time owner-role participants, and agent behavior with 20 fixed version-controlled journeys. Buyer SC-001, SC-002, and SC-008 thresholds require 9 of 10 successes; SC-009 requires all 5 owners to finish within 15 minutes; SC-004 requires 19 of 20 agent journeys. Any unintended consequential action independently fails SC-005 regardless of the aggregate agent score.
+
+**Rationale**: Fixed cohort sizes turn percentage criteria into exact pass counts, make repeated pre-release evidence comparable, and prevent an aggregate score from masking a human-authority violation.
 
 ## Clarification resolution
 

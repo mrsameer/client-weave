@@ -49,8 +49,8 @@ Remote revision notifications refetch the scope and announce the changed fields 
 
 The confirmation view renders the exact server-authored:
 
-- current requirements, constraints, and provenance;
-- current quote/rule version and planning-range notice;
+- complete current scope snapshot, including service requirements/constraints plus actor/time provenance for goal, budget, target delivery, each assumption, and every answer;
+- current eligible quote total, ordered line items, assumptions, rule version, and planning-range notice;
 - selected slot in the workspace timezone, when applicable;
 - normalized contact details;
 - action text (`submit lead` or `submit lead and book consultation`); and
@@ -85,7 +85,7 @@ All owner routes require a current authenticated member of the selected workspac
 
 ## Inspector contract
 
-The scope inspector lists capability name, state effect, whether human confirmation is required, and recent invocation time/outcome/reason. It never displays raw arguments containing buyer prose/contact, bearer tokens, cookies, CSRF/summary nonces, credentials, stack traces, or other scopes. Closing or disabling the inspector has no effect on ordinary workflow availability.
+The scope inspector lists capability name, one exact state effect (`READ_ONLY`, `DRAFT_MUTATION`, `DERIVED_RECORD_WRITE`, or `CONSEQUENTIAL_WRITE`), whether human confirmation is required, and recent invocation time/outcome/reason. It never displays raw arguments containing buyer prose/contact, bearer tokens, cookies, CSRF/summary nonces, credentials, stack traces, or other scopes. Closing or disabling the inspector has no effect on ordinary workflow availability.
 
 ## UI acceptance evidence
 

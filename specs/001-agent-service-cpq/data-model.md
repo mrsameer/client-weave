@@ -8,6 +8,7 @@
 - Treat published service versions, pricing rule sets, quote calculation payloads, confirmation summaries, and audit events as immutable snapshots. Corrections create new records; they do not rewrite commercial history.
 - Use monotonic general, pricing, and finalization revisions on `ScopeSession`. Revisions derive quote/confirmation eligibility without mutating historical records.
 - User-authored text is plain bounded data. It is never evaluated as code, a pricing condition, a capability definition, or an authorization rule.
+- Normalize catalog search text with Unicode NFKC and locale-independent lowercase, tokenize contiguous Unicode letter/number runs, count distinct overlapping need/service tokens, then order active services by eligibility, descending overlap, and ascending service slug.
 
 ## Entity relationships
 
@@ -21,6 +22,7 @@ ServiceVersion 1──* ServiceConstraint
 Workspace 1──* ScopeSession *──1 ServiceVersion
 ScopeSession 1──* ScopeParticipant
 ScopeSession 1──* ScopeAnswer *──1 ScopeField
+ScopeSession 1──* ScopeAssumption
 ScopeSession 1──* Quote *──1 PricingRuleSet
 ScopeSession 1──* HumanConfirmation
 Workspace 1──* AvailabilitySlot 1──0..1 Booking
@@ -85,6 +87,7 @@ Immutable published description and intake configuration used by scopes.
 | `base_min_minor`, `base_max_minor` | integer | Non-negative; minimum ≤ maximum |
 | `delivery_min_business_days`, `delivery_max_business_days` | integer | Positive; minimum ≤ maximum |
 | `included_items` | array of bounded strings | At least one item |
+| `available_add_ons` | bounded JSON array | Unique stable keys with buyer-visible label and description; empty when no add-ons are offered |
 | `published_at` | timestamp | Set once; null while draft |
 
 Existing scopes keep their selected service version after a new version is published.
@@ -132,7 +135,7 @@ Activation retires the prior set for future quotes but never changes prior quote
 | `percentage_basis_points` | integer nullable | Bounded; percentage rules use integer arithmetic and defined rounding |
 | `label` | string | Stable line-item label |
 
-Rules are data interpreted by a closed evaluator; arbitrary expressions and executable code are prohibited.
+Rules are data interpreted by a closed evaluator; arbitrary expressions and executable code are prohibited. Every percentage line-item adjustment is rounded to the nearest minor currency unit with exact halves away from zero, and totals are the sum of individually rounded line items in deterministic rule order.
 
 ### ServiceConstraint
 
@@ -156,9 +159,11 @@ Rules are data interpreted by a closed evaluator; arbitrary expressions and exec
 | `pricing_revision` | positive integer | Incremented when normalized price-affecting state changes; never decremented on edit/revert |
 | `finalization_revision` | positive integer | Incremented when anything in the final summary changes |
 | `goal` | string | 1–2,000 characters, treated as data |
+| `goal_source_actor_type`, `goal_source_actor_id`, `goal_updated_at` | enum/string/timestamp | Server-derived latest source and time for the current goal |
 | `budget_max_minor` | integer nullable | Non-negative |
+| `budget_source_actor_type`, `budget_source_actor_id`, `budget_updated_at` | enum/string/timestamp | Server-derived latest source and time, including the current null state |
 | `target_delivery_date` | date nullable | Interpreted in workspace timezone |
-| `assumptions` | bounded string array | Each entry has provenance through the mutation event |
+| `delivery_source_actor_type`, `delivery_source_actor_id`, `delivery_updated_at` | enum/string/timestamp | Server-derived latest source and time, including the current null state |
 | `current_quote_id` | UUIDv7 nullable | Convenience pointer; eligibility is still recomputed from revisions and current rule pointers |
 | `expires_at` | timestamp | Draft creation + 30 days; never extended beyond policy silently |
 | `finalized_at`, `created_at`, `updated_at` | timestamp | UTC |
@@ -189,6 +194,19 @@ A participant ID alone does not grant owner access or access to any other scope.
 
 An update overwrites the current answer but records the prior and new value in an append-only audit event.
 
+### ScopeAssumption
+
+| Field | Type | Rules |
+|---|---|---|
+| `id`, `scope_session_id` | UUIDv7 | Scope foreign key |
+| `value` | string | 1–500 characters; unique after normalization within the scope |
+| `source_actor_type` | enum | `HUMAN`, `AGENT`, `IMPORTED`, `SYSTEM` |
+| `source_actor_id` | string nullable | Pseudonymous identifier; never a secret |
+| `display_order` | integer | Unique within the scope |
+| `updated_at` | timestamp | UTC |
+
+Assumption list replacement preserves unchanged assumption identities and provenance, removes omitted items, and assigns the trusted current actor and time only to new or changed entries. Each mutation records the before/after list in the audit event.
+
 ### Quote
 
 Immutable calculation result for one exact scope revision and rule set.
@@ -218,7 +236,7 @@ A quote is eligible for finalization only when it has no missing fields or confl
 | `hold_expires_at` | timestamp nullable | Required only for a temporary hold |
 | `created_at`, `updated_at` | timestamp | UTC |
 
-Overlapping available slots are rejected for the MVP. Finalization locks the selected row and conditionally moves `AVAILABLE` to `BOOKED` in the same transaction as booking creation.
+Overlapping available slots are rejected for the MVP. Finalization locks the selected row, verifies stored state is `AVAILABLE` or a valid caller-owned `HELD`, and inserts the unique booking in the same transaction. `BOOKED` remains an effective state derived from the active booking and is never written to `availability_state`.
 
 ### HumanConfirmation
 
@@ -229,7 +247,7 @@ Overlapping available slots are rejected for the MVP. Finalization locks the sel
 | `selected_slot_id` | UUIDv7 nullable | Included when booking is requested |
 | `contact_snapshot` | canonical JSON | Only fields needed for the selected next step |
 | `action` | enum | `SUBMIT_LEAD`, `SUBMIT_LEAD_AND_BOOK` |
-| `summary_hash` | digest | Server digest of scope, quote, slot, contact, action, and retention notice |
+| `summary_hash` | digest | Server digest of the complete attributed scope and service-constraint snapshot, current eligible quote totals/line items, slot, contact, action, notices, and expiry |
 | `confirmed_by` | enum | `HUMAN` only |
 | `confirmed_at`, `invalidated_at` | timestamp | Current only while not invalidated |
 
@@ -288,7 +306,7 @@ Sanitized operational record used by the public scope's tool inspector.
 |---|---|---|
 | `id`, `scope_session_id` | UUIDv7 | Foreign keys |
 | `capability` | enum | One of the six declared capabilities |
-| `state_effect` | enum | `READ`, `DRAFT_WRITE`, `CONSEQUENTIAL_WRITE` |
+| `state_effect` | enum | `READ_ONLY`, `DRAFT_MUTATION`, `DERIVED_RECORD_WRITE`, `CONSEQUENTIAL_WRITE` |
 | `outcome`, `reason_code` | enum/string | No raw secret-bearing errors |
 | `duration_ms`, `occurred_at` | integer/timestamp | Bounded retention |
 
@@ -336,7 +354,7 @@ The booking uniqueness constraint and conditional slot update are the final doub
 
 ## Transaction and integrity boundaries
 
-- **Scope mutation**: lock scope, validate expected revision, upsert answers, increment the applicable revisions, append the audit event, and commit. A private database Broadcast trigger emits only the scope ID, revision, and event type after the committed change; clients refetch the authorized snapshot.
+- **Scope mutation**: lock scope, validate the expected revision, update built-in attributed values, diff ordered assumptions while preserving unchanged provenance, upsert attributed answers, increment the applicable revisions, append the audit event, and commit. A private database Broadcast trigger emits only the scope ID, revision, and event type after the committed change; clients refetch the authorized snapshot.
 - **Quote calculation**: read one consistent snapshot of scope, fields, constraints, and active rule set; normalize and calculate in the domain layer; persist the immutable result and set `current_quote_id` only if the scope revision is unchanged.
 - **Human confirmation**: recompute the server summary hash from current stored data; persist only for a human-originated request and current revision.
 - **Finalization**: claim the idempotency key; lock scope, confirmation, quote, and slot in a fixed order; revalidate all invariants; conditionally claim the slot; insert lead and optional booking; finalize scope; append events; save the response; commit. Any failed invariant rolls back the whole transaction.
@@ -349,6 +367,7 @@ The booking uniqueness constraint and conditional slot update are the final doub
 - Unique `ScopeSession.public_token_hash`; index draft `expires_at` for retention cleanup.
 - Unique `(scope_session_id, ScopeParticipant.auth_subject)`; index participant expiry/revocation for authorization cleanup.
 - Unique `(scope_session_id, scope_field_id)` for current answers.
+- Unique `(scope_session_id, ScopeAssumption.display_order)` and normalized assumption value within a scope.
 - Unique `(scope_session_id, pricing_revision, pricing_rule_set_id, quote.input_hash)` to deduplicate identical calculations.
 - Unique `QualifiedLead.scope_session_id`, `Booking.slot_id`, and `Booking.scope_session_id`.
 - Unique `(workspace_id, scope_session_id, IdempotencyRecord.key)`.

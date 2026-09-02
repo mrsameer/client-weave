@@ -120,15 +120,15 @@ The MVP excludes payment collection, contract acceptance, binding proposals, pro
 - **FR-001**: The product MUST provide a complete ordinary web experience for discovering, scoping, pricing, and booking services without requiring an agent.
 - **FR-002**: The product MUST expose six distinct agent-available capabilities: discover services, create a scope, update a scope, price a scope, find consultation slots, and finalize a confirmed scope.
 - **FR-003**: Each agent-available capability MUST clearly identify whether it only reads information or can change business state; discovery, pricing, and availability checks MUST NOT create leads or bookings.
-- **FR-004**: Service discovery MUST return only active offerings and MUST support matching by buyer need, budget, and approximate delivery timing.
-- **FR-005**: A service offering MUST state its description, base price, currency, expected delivery range, included items, available add-ons, intake fields, and relevant constraints.
-- **FR-006**: A buyer or agent MUST be able to create a draft scope containing a goal, selected service, requirements, budget, target delivery timing, and assumptions.
+- **FR-004**: Service discovery MUST return only active offerings and MUST rank them deterministically by eligibility, then descending distinct normalized keyword overlap between the buyer need and the service name, description, and included items, with service slug as the stable tie-breaker. Budget and approximate delivery timing MUST affect eligibility and explicit fit/conflict reasons rather than silently hiding active offerings.
+- **FR-005**: A service offering MUST state its description, base price, currency, expected delivery range, included items, available add-ons (an empty list when none are offered), intake fields, and relevant buyer-visible constraints (an empty list when none apply).
+- **FR-006**: A buyer or agent MUST be able to create and update a draft scope containing a goal, selected service, requirements, budget, target delivery timing, and a bounded list of assumptions.
 - **FR-007**: Creating or updating a scope MUST return all required fields that are still missing and all currently detectable conflicts.
 - **FR-008**: Human and agent interactions MUST read and modify the same durable scope session rather than separate copies of the buyer's data.
-- **FR-009**: Every scope answer MUST identify whether its latest value came from a human, agent, imported source, or system rule, and this provenance MUST be visible on the scope canvas.
+- **FR-009**: Every current material scope value—including goal, budget, target delivery timing, each assumption, and every scope answer—MUST identify whether its latest value came from a human, agent, imported source, or system rule, plus its update time; this provenance MUST be visible wherever the value is reviewed.
 - **FR-010**: A scope MUST remain available after a page reload until it is finalized, expires, or is deleted under the retention policy.
 - **FR-011**: The product MUST calculate prices exclusively from the owner's active rules and normalized scope values; an agent-supplied total MUST never replace the calculated result.
-- **FR-012**: MVP pricing MUST support base price, quantity adjustments, optional add-ons, and conditional adjustments, applied in an owner-defined priority order.
+- **FR-012**: MVP pricing MUST support base price, quantity adjustments, optional add-ons, and conditional adjustments, applied in an owner-defined priority order. Each percentage line-item adjustment MUST be rounded to the nearest minor currency unit with exact halves rounded away from zero, and the published total MUST equal the sum of the individually rounded ordered line items.
 - **FR-013**: A quote MUST include currency, minimum and maximum total, itemized adjustments, assumptions, missing information, constraint conflicts, calculation time, and the pricing-rule version used.
 - **FR-014**: Repeating a quote request with the same normalized scope and the same pricing-rule version MUST produce the same totals and line items.
 - **FR-015**: A quote MUST become visibly stale when any price-affecting scope value or relevant pricing rule changes, and a stale quote MUST NOT be eligible for finalization.
@@ -162,6 +162,7 @@ The MVP excludes payment collection, contract acceptance, binding proposals, pro
 - **Pricing Rule Set**: The versioned collection of base, quantity, option, and conditional adjustments and service constraints used to calculate a quote.
 - **Scope Session**: The shared, expiring draft jointly edited by a buyer and agent; contains goal, chosen service, requirements, constraints, status, and provenance.
 - **Scope Answer**: One typed requirement or constraint within a scope, together with its latest value, source actor, and update time.
+- **Scope Assumption**: One bounded assumption within a scope, carrying its own stable identity, source actor, display order, and update time.
 - **Quote**: An immutable calculation for a specific scope and rule version, including range, line items, assumptions, conflicts, calculation time, and current/stale status.
 - **Availability Slot**: A consultation interval owned by the workspace, expressed in its timezone and either available, blocked, held, or booked.
 - **Booking**: The confirmed association between one finalized scope and one consultation slot, including contact details and confirmation status.
@@ -172,18 +173,26 @@ The MVP excludes payment collection, contract acceptance, binding proposals, pro
 
 ### Measurable Outcomes
 
-- **SC-001**: In the scripted end-to-end journey, a first-time buyer can go from a natural-language goal to a confirmed consultation with a complete priced scope in under 3 minutes.
+- **SC-001**: At least 90% of the 10-person first-time-buyer cohort can go from a natural-language goal to a confirmed consultation with a complete priced scope in under 3 minutes.
 - **SC-002**: At least 90% of representative first-time test users complete service selection, scope review, quote review, and explicit booking confirmation without assistance.
 - **SC-003**: Across the deterministic quote test set, 100% of repeated calculations using the same scope and rule version return identical totals and line items, with zero expected-rule mismatches.
-- **SC-004**: At least 95% of representative agent journeys choose the correct available capability, provide valid inputs, and reach the expected terminal state without unintended business actions.
+- **SC-004**: At least 95% of the 20 fixed representative agent journeys choose the correct available capability, provide valid inputs, and reach the expected terminal state without unintended business actions.
 - **SC-005**: In 100% of tests, read-only activity and unconfirmed finalization attempts create no lead, booking, or availability change.
 - **SC-006**: In a concurrency test with at least 50 attempts to reserve one slot, exactly one booking succeeds and no double booking is recorded.
-- **SC-007**: Human or agent edits to a live scope become visible to the other participant within 2 seconds in at least 95% of test interactions.
+- **SC-007**: Across 100 measured alternating human/agent updates over 10 fresh scopes, at least 95 updates become visible at the other participant's refreshed revision within 2 seconds of the authoritative commit acknowledgment.
 - **SC-008**: At least 90% of usability-test participants correctly identify which displayed scope values were last set by the human and which were last set by the agent.
-- **SC-009**: A workspace owner can configure and publish one template-based service, its intake fields, pricing rules, constraints, and initial availability in under 15 minutes.
-- **SC-010**: A newly finalized lead, including its confirmed scope, quote, booking, and action history, is visible to the workspace owner within 5 seconds in at least 95% of tests.
+- **SC-009**: All 5 pre-release owner-role participants can configure and publish one template-based service, its intake fields, pricing rules, constraints, and initial availability in under 15 minutes.
+- **SC-010**: Across 20 measured finalizations on fresh scopes, at least 19 complete lead handoffs—including confirmed scope, quote, booking, and action history—become readable by the workspace owner within 5 seconds of the authoritative finalization commit.
 - **SC-011**: All tested historical quotes remain reproducible after a pricing-rule change and visibly retain their original rule version.
 - **SC-012**: The complete buyer journey remains usable when agent capabilities are unavailable, with 100% of core actions accessible through the ordinary interface.
+
+### Pre-release Measurement Protocol
+
+- The buyer cohort contains 10 first-time participants who have not previously used ClientWeave or read its implementation artifacts. Each participant uses a fresh seeded scope. SC-001 passes at 9 of 10 end-to-end completion times under 3 minutes; SC-002 passes at 9 of 10 unassisted completions; SC-008 passes at 9 of 10 correct provenance-identification results.
+- The owner cohort contains 5 service-business operators or representative owner-role participants who have not previously configured ClientWeave. Each uses a fresh template and the same required service/rule/availability scenario; SC-009 passes only when all 5 complete within 15 minutes.
+- The agent corpus contains 20 fixed, version-controlled journeys spanning all six capabilities, ordinary validation failures, stale revisions, conflicts, unavailable slots, missing confirmation, retries, and successful finalization. SC-004 passes at 19 of 20 journeys, and any unintended consequential action fails the independent SC-005 gate regardless of aggregate score.
+- SC-007 uses 100 alternating updates distributed evenly over 10 fresh scopes. SC-010 uses 20 independent fresh-scope finalizations. Each performance run excludes one declared warm-up per browser/environment, uses a monotonic clock, records the commit acknowledgment and observed authorized read/refetch timestamps, and calculates pass counts directly without percentile interpolation.
+- The cohort script, participant criteria, raw timings/outcomes, failures, environment, and summarized calculations MUST be retained in the feature validation report without storing unnecessary personal data.
 
 ## Assumptions
 

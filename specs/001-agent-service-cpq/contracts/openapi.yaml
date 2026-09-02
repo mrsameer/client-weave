@@ -6,16 +6,17 @@ info:
     name: Proprietary
     identifier: LicenseRef-Proprietary
   description: >-
-    Source contract for the ordinary buyer UI and six page-provided agent
-    capabilities. Owner administration uses the same domain services behind
-    authenticated server actions and is described by the plan and data model.
+    Generated external contract for the ordinary buyer UI and six page-provided
+    agent capabilities. Authoritative executable schemas live under
+    src/contracts/schemas/. Owner administration uses the same domain services
+    behind authenticated server actions and is described by the plan and data model.
 servers:
   - url: /api/v1
 tags:
   - name: Discovery
     description: Read-only active service discovery.
   - name: Scope
-    description: Shared draft creation, review, mutation, events, and inspection.
+    description: Shared draft creation, capability exchange, review, mutation, and inspection.
   - name: Pricing
     description: Deterministic quote derivation and persistence.
   - name: Availability
@@ -62,6 +63,25 @@ paths:
                     items: { $ref: '#/components/schemas/ServiceMatch' }
                 additionalProperties: false
         '429': { $ref: '#/components/responses/RateLimited' }
+  /services/{slug}:
+    get:
+      tags: [Discovery]
+      operationId: get_active_service
+      summary: Read one active published service by slug
+      security: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string, minLength: 3, maxLength: 100 }
+      responses:
+        '200':
+          description: Active published service detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceMatch' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /scopes:
     post:
       tags: [Scope]
@@ -91,12 +111,40 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/exchange:
+    post:
+      tags: [Scope]
+      operationId: exchange_scope_capability
+      summary: Exchange a one-time fragment secret for a scope-bound browser session
+      description: This browser-bootstrap operation is not an agent capability and never returns the secret.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scopeRef, secret]
+              properties:
+                scopeRef: { type: string, minLength: 16, maxLength: 128 }
+                secret: { type: string, minLength: 43, maxLength: 512, writeOnly: true }
+              additionalProperties: false
+      responses:
+        '204':
+          description: Scope session established; sets the secure HttpOnly scope cookie and CSRF binding.
+          headers:
+            Set-Cookie:
+              schema: { type: string, writeOnly: true }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /scopes/current:
     get:
       tags: [Scope]
       operationId: get_current_scope
-      summary: Read the one scope authorized by the bearer token
-      security: [{ scopeBearer: [] }]
+      summary: Read the one scope authorized by an agent bearer or browser session
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
       responses:
         '200':
           description: Current review model
@@ -108,7 +156,10 @@ paths:
       tags: [Scope]
       operationId: update_scope
       summary: Apply validated changes to the shared draft
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
       x-agent-capability:
         stateEffect: DRAFT_MUTATION
         consequential: false
@@ -116,7 +167,10 @@ paths:
         - in: header
           name: If-Match
           required: true
-          description: Quoted last-seen scope revision, for example `"7"`.
+          description: >-
+            Canonical HTTP concurrency precondition containing the quoted last-seen
+            scope revision, for example `"7"`. The WebMCP adapter translates its
+            expected_revision argument into this header.
           schema: { type: string }
       requestBody:
         required: true
@@ -140,7 +194,10 @@ paths:
       tags: [Pricing]
       operationId: price_scope
       summary: Deterministically price the current normalized scope
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
       x-agent-capability:
         stateEffect: DERIVED_RECORD_WRITE
         consequential: false
@@ -169,7 +226,9 @@ paths:
       tags: [Availability]
       operationId: find_consultation_slots
       summary: List currently bookable consultation slots
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
       x-agent-capability:
         stateEffect: READ_ONLY
         consequential: false
@@ -201,7 +260,9 @@ paths:
       tags: [Confirmation]
       operationId: create_final_summary
       summary: Build the exact server-authored summary a human must review
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeSessionCookie: []
+          csrfHeader: []
       requestBody:
         required: true
         content:
@@ -220,8 +281,10 @@ paths:
       tags: [Confirmation]
       operationId: record_human_confirmation
       summary: Record a direct human confirmation of the current final summary
-      description: This operation is intentionally not registered as an agent capability.
-      security: [{ scopeBearer: [] }]
+      description: This operation is intentionally not registered as an agent capability and rejects bearer authentication.
+      security:
+        - scopeSessionCookie: []
+          csrfHeader: []
       requestBody:
         required: true
         content:
@@ -251,7 +314,10 @@ paths:
       tags: [Finalization]
       operationId: finalize_confirmed_scope
       summary: Create the single lead and optional booking from a current confirmation
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
       x-agent-capability:
         stateEffect: CONSEQUENTIAL_WRITE
         consequential: true
@@ -283,25 +349,14 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '429': { $ref: '#/components/responses/RateLimited' }
-  /scopes/current/events:
-    get:
-      tags: [Scope]
-      operationId: stream_scope_events
-      summary: Stream revision notifications for the authorized scope
-      security: [{ scopeBearer: [] }]
-      responses:
-        '200':
-          description: Server-sent events containing IDs and revisions, never secrets or full contact data
-          content:
-            text/event-stream:
-              schema: { type: string }
-        '404': { $ref: '#/components/responses/ScopeUnavailable' }
   /scopes/current/inspector:
     get:
       tags: [Scope]
       operationId: get_scope_tool_inspector
       summary: Read capability definitions and sanitized recent outcomes for this scope
-      security: [{ scopeBearer: [] }]
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
       responses:
         '200':
           description: Safe inspector model
@@ -326,7 +381,17 @@ components:
       type: http
       scheme: bearer
       bearerFormat: OpaqueScopeToken
-      description: High-entropy token authorizing only one unexpired scope; stored hashed server-side.
+      description: Agent credential authorizing only one unexpired scope; stored hashed server-side.
+    scopeSessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-clientweave_scope
+      description: Secure HttpOnly browser session authorizing only one unexpired scope.
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Required with the scope session cookie for browser mutations.
   parameters:
     IdempotencyKeyRequired:
       in: header
@@ -339,6 +404,11 @@ components:
       required: false
       schema: { type: string, minLength: 16, maxLength: 128 }
   responses:
+    NotFound:
+      description: The requested public resource does not exist or is not available
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
     ValidationError:
       description: Input or current-state validation failed safely
       content:
@@ -388,7 +458,7 @@ components:
       additionalProperties: false
     ServiceMatch:
       type: object
-      required: [serviceId, slug, name, description, basePrice, deliveryBusinessDays, includedItems, intakeFields, fit]
+      required: [serviceId, slug, name, description, basePrice, deliveryBusinessDays, includedItems, addOns, intakeFields, constraints, fit]
       properties:
         serviceId: { type: string, format: uuid }
         slug: { type: string }
@@ -407,6 +477,9 @@ components:
         intakeFields:
           type: array
           items: { $ref: '#/components/schemas/ScopeField' }
+        constraints:
+          type: array
+          items: { $ref: '#/components/schemas/ServiceConstraintSummary' }
         fit:
           type: object
           required: [eligible, reasons, conflicts]
@@ -436,6 +509,11 @@ components:
         goal: { type: string, minLength: 1, maxLength: 2000 }
         budgetMaxMinor: { type: integer, minimum: 0 }
         targetDeliveryDate: { type: string, format: date }
+        assumptions:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 500 }
         answers:
           type: array
           maxItems: 100
@@ -443,15 +521,19 @@ components:
       additionalProperties: false
     UpdateScopeRequest:
       type: object
-      required: [expectedRevision, changes]
+      required: [changes]
       properties:
-        expectedRevision: { type: integer, minimum: 1 }
         changes:
           type: object
           properties:
             goal: { type: string, minLength: 1, maxLength: 2000 }
             budgetMaxMinor: { type: [integer, 'null'], minimum: 0 }
             targetDeliveryDate: { type: [string, 'null'], format: date }
+            assumptions:
+              type: array
+              maxItems: 20
+              uniqueItems: true
+              items: { type: string, minLength: 1, maxLength: 500 }
             answers:
               type: array
               maxItems: 100
@@ -467,26 +549,22 @@ components:
       additionalProperties: false
     ScopeReview:
       type: object
-      required: [scopeRef, status, revision, service, goal, answers, missingFields, conflicts, quoteStatus, expiresAt]
+      required: [scopeRef, status, revision, service, goal, budgetMaxMinor, targetDeliveryDate, assumptions, answers, missingFields, conflicts, quoteStatus, expiresAt]
       properties:
         scopeRef: { type: string, minLength: 16, maxLength: 128 }
         status: { enum: [DRAFT, FINALIZED, EXPIRED] }
         revision: { type: integer, minimum: 1 }
         service: { $ref: '#/components/schemas/ServiceMatch' }
-        goal: { type: string }
-        budgetMaxMinor: { type: [integer, 'null'], minimum: 0 }
-        targetDeliveryDate: { type: [string, 'null'], format: date }
+        goal: { $ref: '#/components/schemas/AttributedTextValue' }
+        budgetMaxMinor: { $ref: '#/components/schemas/AttributedNullableMoneyValue' }
+        targetDeliveryDate: { $ref: '#/components/schemas/AttributedNullableDateValue' }
+        assumptions:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/AttributedTextValue' }
         answers:
           type: array
-          items:
-            type: object
-            required: [fieldKey, value, provenance, updatedAt]
-            properties:
-              fieldKey: { type: string }
-              value: {}
-              provenance: { enum: [HUMAN, AGENT, IMPORTED, SYSTEM] }
-              updatedAt: { type: string, format: date-time }
-            additionalProperties: false
+          items: { $ref: '#/components/schemas/AttributedAnswer' }
         missingFields: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
         conflicts: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
         quoteStatus: { enum: [NONE, CURRENT, STALE, INCOMPLETE, CONFLICTED] }
@@ -505,6 +583,53 @@ components:
         message: { type: string }
         severity: { enum: [INFO, WARNING, ERROR], default: ERROR }
         suggestedActions: { type: array, items: { type: string } }
+      additionalProperties: false
+    ServiceConstraintSummary:
+      type: object
+      required: [type, fieldKeys, message]
+      properties:
+        type: { enum: [DELIVERY_MINIMUM, INCOMPATIBLE_OPTIONS, FIELD_LIMIT, BUDGET_FLOOR] }
+        fieldKeys:
+          type: array
+          items: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        message: { type: string, minLength: 1, maxLength: 500 }
+      additionalProperties: false
+    ProvenanceMetadata:
+      type: object
+      required: [actorType, updatedAt]
+      properties:
+        actorType: { enum: [HUMAN, AGENT, IMPORTED, SYSTEM] }
+        actorId: { type: [string, 'null'], maxLength: 255 }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    AttributedTextValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: string }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedNullableMoneyValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: [integer, 'null'], minimum: 0 }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedNullableDateValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: [string, 'null'], format: date }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedAnswer:
+      type: object
+      required: [fieldKey, value, provenance]
+      properties:
+        fieldKey: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        value: {}
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
       additionalProperties: false
     QuoteResult:
       type: object
@@ -548,23 +673,39 @@ components:
         quoteId: { type: string, format: uuid }
         action: { enum: [SUBMIT_LEAD, SUBMIT_LEAD_AND_BOOK] }
         slotId: { type: string, format: uuid }
-        contact:
-          type: object
-          required: [name, email]
-          properties:
-            name: { type: string, minLength: 1, maxLength: 100 }
-            email: { type: string, format: email, maxLength: 254 }
-          additionalProperties: false
+        contact: { $ref: '#/components/schemas/ContactInput' }
       additionalProperties: false
+    ContactInput:
+      type: object
+      required: [name, email]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 254 }
+      additionalProperties: false
+    CurrentFinalQuote:
+      allOf:
+        - $ref: '#/components/schemas/QuoteResult'
+        - type: object
+          required: [quoteId, total, lineItems, calculatedAt]
+          properties:
+            eligible: { const: true }
+    CurrentFinalScopeReview:
+      allOf:
+        - $ref: '#/components/schemas/ScopeReview'
+        - type: object
+          properties:
+            status: { const: DRAFT }
+            quoteStatus: { const: CURRENT }
     FinalSummary:
       type: object
-      required: [summaryNonce, scopeRevision, quote, action, contact, notices, expiresAt]
+      required: [summaryNonce, scopeRevision, scopeSnapshot, quote, action, contact, notices, expiresAt]
       properties:
-        summaryNonce: { type: string }
-        scopeRevision: { type: integer }
-        quote: { $ref: '#/components/schemas/QuoteResult' }
+        summaryNonce: { type: string, minLength: 32, maxLength: 512 }
+        scopeRevision: { type: integer, minimum: 1 }
+        scopeSnapshot: { $ref: '#/components/schemas/CurrentFinalScopeReview' }
+        quote: { $ref: '#/components/schemas/CurrentFinalQuote' }
         action: { enum: [SUBMIT_LEAD, SUBMIT_LEAD_AND_BOOK] }
-        contact: { type: object }
+        contact: { $ref: '#/components/schemas/ContactInput' }
         slot: { $ref: '#/components/schemas/AvailabilitySlot' }
         notices: { type: array, items: { type: string } }
         expiresAt: { type: string, format: date-time }
@@ -584,7 +725,7 @@ components:
       required: [name, stateEffect, consequential, description]
       properties:
         name: { enum: [discover_services, create_scope, update_scope, price_scope, find_consultation_slots, finalize_confirmed_scope] }
-        stateEffect: { enum: [READ_ONLY, DRAFT_MUTATION, DERIVED_RECORD_WRITE, CONSEQUENTIAL_WRITE] }
+        stateEffect: { $ref: '#/components/schemas/StateEffect' }
         consequential: { type: boolean }
         description: { type: string }
       additionalProperties: false
@@ -593,12 +734,14 @@ components:
       required: [capability, stateEffect, outcome, occurredAt]
       properties:
         capability: { type: string }
-        stateEffect: { type: string }
+        stateEffect: { $ref: '#/components/schemas/StateEffect' }
         outcome: { enum: [SUCCEEDED, REJECTED, FAILED] }
         reasonCode: { type: string }
         durationMs: { type: integer, minimum: 0 }
         occurredAt: { type: string, format: date-time }
       additionalProperties: false
+    StateEffect:
+      enum: [READ_ONLY, DRAFT_MUTATION, DERIVED_RECORD_WRITE, CONSEQUENTIAL_WRITE]
     ProblemDetails:
       type: object
       required: [type, title, status, detail, code, retryable, traceId]
