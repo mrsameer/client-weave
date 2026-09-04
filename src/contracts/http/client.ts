@@ -8,9 +8,23 @@ export class HttpProblem extends Error {
   }
 }
 
+function browserCsrfToken() {
+  if (typeof document === "undefined") return null;
+  const encoded = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith("clientweave_csrf="))
+    ?.split("=")[1];
+  return encoded ? decodeURIComponent(encoded) : null;
+}
+
 export async function requestJson<T>(input: RequestInfo | URL, init: RequestInit = {}): Promise<T> {
   const headers = new Headers({ accept: "application/json" });
   new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+  const method = init.method?.toUpperCase();
+  if (method && method !== "GET" && method !== "HEAD" && !headers.has("x-csrf-token")) {
+    const token = browserCsrfToken();
+    if (token) headers.set("x-csrf-token", token);
+  }
   const response = await fetch(input, {
     ...init,
     headers

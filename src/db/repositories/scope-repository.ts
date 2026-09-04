@@ -119,7 +119,11 @@ export class ScopeRepository {
         .orderBy(asc(scopeAssumptions.displayOrder)),
       this.db.select().from(scopeAnswers).where(eq(scopeAnswers.scopeId, scope.id)),
       this.db
-        .select({ definition: scopeFields.definition, displayOrder: scopeFields.displayOrder })
+        .select({
+          key: scopeFields.key,
+          definition: scopeFields.definition,
+          displayOrder: scopeFields.displayOrder
+        })
         .from(scopeFields)
         .innerJoin(serviceVersions, eq(scopeFields.serviceVersionId, serviceVersions.id))
         .innerJoin(serviceOfferings, eq(serviceVersions.id, serviceOfferings.activeVersionId))
@@ -135,7 +139,10 @@ export class ScopeRepository {
           { value: answer.value as ScopeValue, actor: answer.actor, updatedAt: answer.updatedAt }
         ])
       ),
-      fields: fields.map((field) => field.definition as FieldDefinition)
+      fields: fields.map((field) => ({
+        ...(field.definition as Omit<FieldDefinition, "key">),
+        key: field.key
+      }))
     };
   }
   async getByReference(ref: string): Promise<StoredScope> {

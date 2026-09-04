@@ -19,7 +19,10 @@ export function FinalizationPanel({ slotId }: { slotId: string | null }) {
     const action = slotId ? "SUBMIT_LEAD_AND_BOOK" : "SUBMIT_LEAD";
     const response = await fetch("/api/v1/scopes/current/final-summary", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "x-csrf-token": decodeURIComponent(csrf())
+      },
       body: JSON.stringify({
         contact: { ...(name ? { name } : {}), ...(email ? { email } : {}) },
         action,

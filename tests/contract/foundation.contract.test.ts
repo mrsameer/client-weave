@@ -57,6 +57,18 @@ describe("foundation HTTP contracts", () => {
     vi.unstubAllGlobals();
   });
 
+  it("adds the browser CSRF cookie to mutation requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("document", { cookie: "clientweave_csrf=browser-token" });
+
+    await requestJson("/api/v1/scopes", { method: "POST" });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get("x-csrf-token")).toBe("browser-token");
+    vi.unstubAllGlobals();
+  });
+
   it("rejects malformed capability exchanges and agent-originated human confirmation before storage", async () => {
     const exchange = await exchangeScopeCapability(
       new NextRequest("http://clientweave.test/api/v1/scopes/exchange", {
