@@ -2,12 +2,24 @@ import { expect, test } from "@playwright/test";
 
 test("registers all contracted WebMCP tools with the browser model context", async ({ page }) => {
   if (!process.env.LIVE_WEBMCP_URL)
-    await page.route("**/api/v1/services?*", (route) =>
-      route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ services: [{ slug: "launch-website", name: "Launch Website" }] })
-      })
-    );
+    await Promise.all([
+      page.route("**/api/v1/services?*", (route) =>
+        route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({ services: [{ slug: "launch-website", name: "Launch Website" }] })
+        })
+      ),
+      page.route("**/api/v1/scopes", (route) =>
+        route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            ref: "webmcp-browser-test",
+            continuationUrl: "/s/webmcp-browser-test#one-time-secret"
+          })
+        })
+      )
+    ]);
   await page.addInitScript(() => {
     type Tool = { name: string; execute: (input: Record<string, unknown>) => Promise<unknown> };
     const registered = new Map<string, Tool>();
@@ -56,4 +68,18 @@ test("registers all contracted WebMCP tools with the browser model context", asy
   expect((discovery as { services: unknown[] }).services).toEqual(
     expect.arrayContaining([expect.objectContaining({ slug: "launch-website" })])
   );
+  const created = await page.evaluate(() =>
+    (
+      window as typeof window & {
+        __callWebMcpTool: (name: string, input: Record<string, unknown>) => Promise<unknown>;
+      }
+    ).__callWebMcpTool("create_scope", {
+      serviceSlug: "launch-website",
+      goal: "Launch a hackathon website"
+    })
+  );
+  expect(created).toMatchObject({
+    ref: expect.any(String),
+    continuationUrl: expect.stringContaining("/s/")
+  });
 });
