@@ -1,0 +1,16 @@
+node_modules/
+.next/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.log
+.env*
+!.env.local.example
+.DS_Store
+*.tmp
+*.swp
+*.tsbuildinfo
+.vscode/
+.idea/

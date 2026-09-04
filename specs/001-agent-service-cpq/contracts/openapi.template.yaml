@@ -1,0 +1,758 @@
+openapi: 3.1.0
+info:
+  title: ClientWeave Public and Agent API
+  version: 1.0.0
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+  description: >-
+    Generated external contract for the ordinary buyer UI and six page-provided
+    agent capabilities. Authoritative executable schemas live under
+    src/contracts/schemas/. Owner administration uses the same domain services
+    behind authenticated server actions and is described by the plan and data model.
+servers:
+  - url: /api/v1
+tags:
+  - name: Discovery
+    description: Read-only active service discovery.
+  - name: Scope
+    description: Shared draft creation, capability exchange, review, mutation, and inspection.
+  - name: Pricing
+    description: Deterministic quote derivation and persistence.
+  - name: Availability
+    description: Read-only native consultation availability.
+  - name: Confirmation
+    description: Server-authored review and direct human confirmation.
+  - name: Finalization
+    description: Atomic idempotent lead submission and optional booking.
+paths:
+  /services:
+    get:
+      tags: [Discovery]
+      operationId: discover_services
+      summary: Discover active services matching a buyer need
+      security: []
+      x-agent-capability:
+        stateEffect: READ_ONLY
+        consequential: false
+      parameters:
+        - in: query
+          name: need
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 1000 }
+        - in: query
+          name: budgetMaxMinor
+          schema: { type: integer, minimum: 0 }
+        - in: query
+          name: desiredDeliveryDate
+          schema: { type: string, format: date }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 10, default: 5 }
+      responses:
+        '200':
+          description: Matching active services
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [services]
+                properties:
+                  services:
+                    type: array
+                    items: { $ref: '#/components/schemas/ServiceMatch' }
+                additionalProperties: false
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /services/{slug}:
+    get:
+      tags: [Discovery]
+      operationId: get_active_service
+      summary: Read one active published service by slug
+      security: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string, minLength: 3, maxLength: 100 }
+      responses:
+        '200':
+          description: Active published service detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceMatch' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes:
+    post:
+      tags: [Scope]
+      operationId: create_scope
+      summary: Create one durable shared draft scope
+      security: []
+      x-agent-capability:
+        stateEffect: DRAFT_MUTATION
+        consequential: false
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateScopeRequest' }
+      responses:
+        '201':
+          description: Scope created; continuationUrl contains a one-time bearer token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ScopeReview'
+                  - type: object
+                    required: [continuationUrl]
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/exchange:
+    post:
+      tags: [Scope]
+      operationId: exchange_scope_capability
+      summary: Exchange a one-time fragment secret for a scope-bound browser session
+      description: This browser-bootstrap operation is not an agent capability and never returns the secret.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scopeRef, secret]
+              properties:
+                scopeRef: { type: string, minLength: 16, maxLength: 128 }
+                secret: { type: string, minLength: 43, maxLength: 512, writeOnly: true }
+              additionalProperties: false
+      responses:
+        '204':
+          description: Scope session established; sets the secure HttpOnly scope cookie and CSRF binding.
+          headers:
+            Set-Cookie:
+              schema: { type: string, writeOnly: true }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/current:
+    get:
+      tags: [Scope]
+      operationId: get_current_scope
+      summary: Read the one scope authorized by an agent bearer or browser session
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+      responses:
+        '200':
+          description: Current review model
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScopeReview' }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+    patch:
+      tags: [Scope]
+      operationId: update_scope
+      summary: Apply validated changes to the shared draft
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
+      x-agent-capability:
+        stateEffect: DRAFT_MUTATION
+        consequential: false
+      parameters:
+        - in: header
+          name: If-Match
+          required: true
+          description: >-
+            Canonical HTTP concurrency precondition containing the quoted last-seen
+            scope revision, for example `"7"`. The WebMCP adapter translates its
+            expected_revision argument into this header.
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateScopeRequest' }
+      responses:
+        '200':
+          description: Updated scope and validation state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScopeReview' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/current/quotes:
+    post:
+      tags: [Pricing]
+      operationId: price_scope
+      summary: Deterministically price the current normalized scope
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
+      x-agent-capability:
+        stateEffect: DERIVED_RECORD_WRITE
+        consequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedRevision]
+              properties:
+                expectedRevision: { type: integer, minimum: 1 }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Quote result; eligibility is false when information is missing or conflicted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuoteResult' }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/current/availability:
+    get:
+      tags: [Availability]
+      operationId: find_consultation_slots
+      summary: List currently bookable consultation slots
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+      x-agent-capability:
+        stateEffect: READ_ONLY
+        consequential: false
+      parameters:
+        - in: query
+          name: after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 30, default: 10 }
+      responses:
+        '200':
+          description: Available slots; listing does not reserve them
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timezone, slots]
+                properties:
+                  timezone: { type: string, example: America/New_York }
+                  slots:
+                    type: array
+                    items: { $ref: '#/components/schemas/AvailabilitySlot' }
+                additionalProperties: false
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /scopes/current/final-summary:
+    post:
+      tags: [Confirmation]
+      operationId: create_final_summary
+      summary: Build the exact server-authored summary a human must review
+      security:
+        - scopeSessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FinalizationSelection' }
+      responses:
+        '200':
+          description: Display-ready summary and short-lived nonce
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinalSummary' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /scopes/current/human-confirmations:
+    post:
+      tags: [Confirmation]
+      operationId: record_human_confirmation
+      summary: Record a direct human confirmation of the current final summary
+      description: This operation is intentionally not registered as an agent capability and rejects bearer authentication.
+      security:
+        - scopeSessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [summaryNonce]
+              properties:
+                summaryNonce: { type: string, minLength: 32, maxLength: 512 }
+              additionalProperties: false
+      responses:
+        '201':
+          description: Current human confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [confirmationId, confirmedAt]
+                properties:
+                  confirmationId: { type: string, format: uuid }
+                  confirmedAt: { type: string, format: date-time }
+                additionalProperties: false
+        '403': { $ref: '#/components/responses/HumanGestureRequired' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /scopes/current/finalizations:
+    post:
+      tags: [Finalization]
+      operationId: finalize_confirmed_scope
+      summary: Create the single lead and optional booking from a current confirmation
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+          csrfHeader: []
+      x-agent-capability:
+        stateEffect: CONSEQUENTIAL_WRITE
+        consequential: true
+        requiresCurrentHumanConfirmation: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmationId]
+              properties:
+                confirmationId: { type: string, format: uuid }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Existing result returned for a successful retry
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinalizationResult' }
+        '201':
+          description: Lead and optional booking created atomically
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinalizationResult' }
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /scopes/current/inspector:
+    get:
+      tags: [Scope]
+      operationId: get_scope_tool_inspector
+      summary: Read capability definitions and sanitized recent outcomes for this scope
+      security:
+        - scopeBearer: []
+        - scopeSessionCookie: []
+      responses:
+        '200':
+          description: Safe inspector model
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [capabilities, recentInvocations]
+                properties:
+                  capabilities:
+                    type: array
+                    items: { $ref: '#/components/schemas/CapabilitySummary' }
+                  recentInvocations:
+                    type: array
+                    maxItems: 50
+                    items: { $ref: '#/components/schemas/InvocationSummary' }
+                additionalProperties: false
+        '404': { $ref: '#/components/responses/ScopeUnavailable' }
+components:
+  securitySchemes:
+    scopeBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: OpaqueScopeToken
+      description: Agent credential authorizing only one unexpired scope; stored hashed server-side.
+    scopeSessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-clientweave_scope
+      description: Secure HttpOnly browser session authorizing only one unexpired scope.
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Required with the scope session cookie for browser mutations.
+  parameters:
+    IdempotencyKeyRequired:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 128 }
+    IdempotencyKeyOptional:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema: { type: string, minLength: 16, maxLength: 128 }
+  responses:
+    NotFound:
+      description: The requested public resource does not exist or is not available
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    ValidationError:
+      description: Input or current-state validation failed safely
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: Revision, quote, confirmation, idempotency, or slot conflict
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    ScopeUnavailable:
+      description: Scope credential is invalid, expired, revoked, or does not authorize this resource
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    PreconditionFailed:
+      description: The supplied scope revision is stale
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    PreconditionRequired:
+      description: A required revision precondition is missing
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    HumanGestureRequired:
+      description: Confirmation did not originate from the trusted human UI boundary
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    RateLimited:
+      description: Public request limit exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+  schemas:
+    MoneyRange:
+      type: object
+      required: [currency, minMinor, maxMinor]
+      properties:
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        minMinor: { type: integer, minimum: 0 }
+        maxMinor: { type: integer, minimum: 0 }
+      additionalProperties: false
+    ServiceMatch:
+      type: object
+      required: [serviceId, slug, name, description, basePrice, deliveryBusinessDays, includedItems, addOns, intakeFields, constraints, fit]
+      properties:
+        serviceId: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        basePrice: { $ref: '#/components/schemas/MoneyRange' }
+        deliveryBusinessDays:
+          type: object
+          required: [min, max]
+          properties:
+            min: { type: integer, minimum: 1 }
+            max: { type: integer, minimum: 1 }
+          additionalProperties: false
+        includedItems: { type: array, items: { type: string } }
+        addOns: { type: array, items: { type: string } }
+        intakeFields:
+          type: array
+          items: { $ref: '#/components/schemas/ScopeField' }
+        constraints:
+          type: array
+          items: { $ref: '#/components/schemas/ServiceConstraintSummary' }
+        fit:
+          type: object
+          required: [eligible, reasons, conflicts]
+          properties:
+            eligible: { type: boolean }
+            reasons: { type: array, items: { type: string } }
+            conflicts: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+          additionalProperties: false
+      additionalProperties: false
+    ScopeField:
+      type: object
+      required: [key, label, valueType, required, priceAffecting]
+      properties:
+        key: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        label: { type: string }
+        helpText: { type: string }
+        valueType: { enum: [TEXT, INTEGER, DECIMAL, BOOLEAN, DATE, SINGLE_CHOICE, MULTI_CHOICE] }
+        required: { type: boolean }
+        priceAffecting: { type: boolean }
+        allowedValues: { type: array, items: { type: [string, number, boolean] } }
+      additionalProperties: false
+    CreateScopeRequest:
+      type: object
+      required: [serviceId, goal]
+      properties:
+        serviceId: { type: string, format: uuid }
+        goal: { type: string, minLength: 1, maxLength: 2000 }
+        budgetMaxMinor: { type: integer, minimum: 0 }
+        targetDeliveryDate: { type: string, format: date }
+        assumptions:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 500 }
+        answers:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/AnswerInput' }
+      additionalProperties: false
+    UpdateScopeRequest:
+      type: object
+      required: [changes]
+      properties:
+        changes:
+          type: object
+          properties:
+            goal: { type: string, minLength: 1, maxLength: 2000 }
+            budgetMaxMinor: { type: [integer, 'null'], minimum: 0 }
+            targetDeliveryDate: { type: [string, 'null'], format: date }
+            assumptions:
+              type: array
+              maxItems: 20
+              uniqueItems: true
+              items: { type: string, minLength: 1, maxLength: 500 }
+            answers:
+              type: array
+              maxItems: 100
+              items: { $ref: '#/components/schemas/AnswerInput' }
+          additionalProperties: false
+      additionalProperties: false
+    AnswerInput:
+      type: object
+      required: [fieldKey, value]
+      properties:
+        fieldKey: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        value: {}
+      additionalProperties: false
+    ScopeReview:
+      type: object
+      required: [scopeRef, status, revision, service, goal, budgetMaxMinor, targetDeliveryDate, assumptions, answers, missingFields, conflicts, quoteStatus, expiresAt]
+      properties:
+        scopeRef: { type: string, minLength: 16, maxLength: 128 }
+        status: { enum: [DRAFT, FINALIZED, EXPIRED] }
+        revision: { type: integer, minimum: 1 }
+        service: { $ref: '#/components/schemas/ServiceMatch' }
+        goal: { $ref: '#/components/schemas/AttributedTextValue' }
+        budgetMaxMinor: { $ref: '#/components/schemas/AttributedNullableMoneyValue' }
+        targetDeliveryDate: { $ref: '#/components/schemas/AttributedNullableDateValue' }
+        assumptions:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/AttributedTextValue' }
+        answers:
+          type: array
+          items: { $ref: '#/components/schemas/AttributedAnswer' }
+        missingFields: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        conflicts: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        quoteStatus: { enum: [NONE, CURRENT, STALE, INCOMPLETE, CONFLICTED] }
+        expiresAt: { type: string, format: date-time }
+        continuationUrl:
+          type: string
+          format: uri
+          description: Returned only once from scope creation; its secret is in the URL fragment.
+      additionalProperties: false
+    ValidationIssue:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        fieldKey: { type: string }
+        message: { type: string }
+        severity: { enum: [INFO, WARNING, ERROR], default: ERROR }
+        suggestedActions: { type: array, items: { type: string } }
+      additionalProperties: false
+    ServiceConstraintSummary:
+      type: object
+      required: [type, fieldKeys, message]
+      properties:
+        type: { enum: [DELIVERY_MINIMUM, INCOMPATIBLE_OPTIONS, FIELD_LIMIT, BUDGET_FLOOR] }
+        fieldKeys:
+          type: array
+          items: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        message: { type: string, minLength: 1, maxLength: 500 }
+      additionalProperties: false
+    ProvenanceMetadata:
+      type: object
+      required: [actorType, updatedAt]
+      properties:
+        actorType: { enum: [HUMAN, AGENT, IMPORTED, SYSTEM] }
+        actorId: { type: [string, 'null'], maxLength: 255 }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    AttributedTextValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: string }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedNullableMoneyValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: [integer, 'null'], minimum: 0 }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedNullableDateValue:
+      type: object
+      required: [value, provenance]
+      properties:
+        value: { type: [string, 'null'], format: date }
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    AttributedAnswer:
+      type: object
+      required: [fieldKey, value, provenance]
+      properties:
+        fieldKey: { type: string, pattern: '^[a-z][a-z0-9_]{0,63}$' }
+        value: {}
+        provenance: { $ref: '#/components/schemas/ProvenanceMetadata' }
+      additionalProperties: false
+    QuoteResult:
+      type: object
+      required: [eligible, scopeRevision, ruleSetVersion, missingFields, conflicts, assumptions]
+      properties:
+        eligible: { type: boolean }
+        quoteId: { type: string, format: uuid }
+        scopeRevision: { type: integer, minimum: 1 }
+        ruleSetVersion: { type: integer, minimum: 1 }
+        total: { $ref: '#/components/schemas/MoneyRange' }
+        lineItems:
+          type: array
+          items:
+            type: object
+            required: [ruleId, label, minAdjustmentMinor, maxAdjustmentMinor]
+            properties:
+              ruleId: { type: string, format: uuid }
+              label: { type: string }
+              minAdjustmentMinor: { type: integer }
+              maxAdjustmentMinor: { type: integer }
+            additionalProperties: false
+        assumptions: { type: array, items: { type: string } }
+        missingFields: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        conflicts: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        calculatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    AvailabilitySlot:
+      type: object
+      required: [slotId, startsAt, endsAt, timezone]
+      properties:
+        slotId: { type: string, format: uuid }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        timezone: { type: string }
+      additionalProperties: false
+    FinalizationSelection:
+      type: object
+      required: [expectedRevision, quoteId, action, contact]
+      properties:
+        expectedRevision: { type: integer, minimum: 1 }
+        quoteId: { type: string, format: uuid }
+        action: { enum: [SUBMIT_LEAD, SUBMIT_LEAD_AND_BOOK] }
+        slotId: { type: string, format: uuid }
+        contact: { $ref: '#/components/schemas/ContactInput' }
+      additionalProperties: false
+    ContactInput:
+      type: object
+      required: [name, email]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 254 }
+      additionalProperties: false
+    CurrentFinalQuote:
+      allOf:
+        - $ref: '#/components/schemas/QuoteResult'
+        - type: object
+          required: [quoteId, total, lineItems, calculatedAt]
+          properties:
+            eligible: { const: true }
+    CurrentFinalScopeReview:
+      allOf:
+        - $ref: '#/components/schemas/ScopeReview'
+        - type: object
+          properties:
+            status: { const: DRAFT }
+            quoteStatus: { const: CURRENT }
+    FinalSummary:
+      type: object
+      required: [summaryNonce, scopeRevision, scopeSnapshot, quote, action, contact, notices, expiresAt]
+      properties:
+        summaryNonce: { type: string, minLength: 32, maxLength: 512 }
+        scopeRevision: { type: integer, minimum: 1 }
+        scopeSnapshot: { $ref: '#/components/schemas/CurrentFinalScopeReview' }
+        quote: { $ref: '#/components/schemas/CurrentFinalQuote' }
+        action: { enum: [SUBMIT_LEAD, SUBMIT_LEAD_AND_BOOK] }
+        contact: { $ref: '#/components/schemas/ContactInput' }
+        slot: { $ref: '#/components/schemas/AvailabilitySlot' }
+        notices: { type: array, items: { type: string } }
+        expiresAt: { type: string, format: date-time }
+      additionalProperties: false
+    FinalizationResult:
+      type: object
+      required: [scopeRef, leadId, status, finalizedAt]
+      properties:
+        scopeRef: { type: string, minLength: 16, maxLength: 128 }
+        leadId: { type: string, format: uuid }
+        bookingId: { type: string, format: uuid }
+        status: { enum: [FINALIZED] }
+        finalizedAt: { type: string, format: date-time }
+      additionalProperties: false
+    CapabilitySummary:
+      type: object
+      required: [name, stateEffect, consequential, description]
+      properties:
+        name: { enum: [discover_services, create_scope, update_scope, price_scope, find_consultation_slots, finalize_confirmed_scope] }
+        stateEffect: { $ref: '#/components/schemas/StateEffect' }
+        consequential: { type: boolean }
+        description: { type: string }
+      additionalProperties: false
+    InvocationSummary:
+      type: object
+      required: [capability, stateEffect, outcome, occurredAt]
+      properties:
+        capability: { type: string }
+        stateEffect: { $ref: '#/components/schemas/StateEffect' }
+        outcome: { enum: [SUCCEEDED, REJECTED, FAILED] }
+        reasonCode: { type: string }
+        durationMs: { type: integer, minimum: 0 }
+        occurredAt: { type: string, format: date-time }
+      additionalProperties: false
+    StateEffect:
+      enum: [READ_ONLY, DRAFT_MUTATION, DERIVED_RECORD_WRITE, CONSEQUENTIAL_WRITE]
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, code, retryable, traceId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+        code: { type: string }
+        retryable: { type: boolean }
+        fieldErrors: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        currentRevision: { type: integer, minimum: 1 }
+        traceId: { type: string }

@@ -1,0 +1,38 @@
+[
+  { "id": "discover-fit", "capability": "discover_services", "outcome": "match" },
+  { "id": "discover-under-budget", "capability": "discover_services", "outcome": "tradeoff" },
+  { "id": "discover-no-match", "capability": "discover_services", "outcome": "empty" },
+  { "id": "create-minimum", "capability": "create_scope", "outcome": "draft" },
+  { "id": "create-with-answers", "capability": "create_scope", "outcome": "draft" },
+  { "id": "create-invalid-service", "capability": "create_scope", "outcome": "rejected" },
+  { "id": "update-goal", "capability": "update_scope", "outcome": "revision" },
+  { "id": "update-tradeoff", "capability": "update_scope", "outcome": "revision" },
+  { "id": "update-stale-revision", "capability": "update_scope", "outcome": "conflict" },
+  { "id": "price-current", "capability": "price_scope", "outcome": "current" },
+  { "id": "price-incomplete", "capability": "price_scope", "outcome": "incomplete" },
+  { "id": "price-conflicted", "capability": "price_scope", "outcome": "conflicted" },
+  { "id": "availability-read-only", "capability": "find_consultation_slots", "outcome": "slots" },
+  { "id": "availability-empty", "capability": "find_consultation_slots", "outcome": "empty" },
+  {
+    "id": "availability-unavailable",
+    "capability": "find_consultation_slots",
+    "outcome": "recovery"
+  },
+  { "id": "finalize-unconfirmed", "capability": "finalize_confirmed_scope", "outcome": "rejected" },
+  {
+    "id": "finalize-stale-summary",
+    "capability": "finalize_confirmed_scope",
+    "outcome": "rejected"
+  },
+  {
+    "id": "finalize-slot-contention",
+    "capability": "finalize_confirmed_scope",
+    "outcome": "rejected"
+  },
+  { "id": "finalize-confirmed", "capability": "finalize_confirmed_scope", "outcome": "lead" },
+  {
+    "id": "finalize-idempotent-retry",
+    "capability": "finalize_confirmed_scope",
+    "outcome": "same-lead"
+  }
+]

@@ -5,7 +5,7 @@ This guide describes the runnable validation surface the implementation must pro
 ## Prerequisites
 
 - Node.js 24.x and Corepack
-- pnpm 11.x
+- pnpm 10.x (the repository pins pnpm 10.17.1)
 - Docker-compatible container runtime
 - Supabase CLI 2.x
 - Chromium installed by the test setup for the optional WebMCP suite
@@ -18,14 +18,23 @@ From the repository root:
 
 ```bash
 corepack enable
-pnpm install --frozen-lockfile
+corepack pnpm install --frozen-lockfile
 cp .env.local.example .env.local
-supabase start
-pnpm db:reset
-pnpm dev
+
+# Start a disposable PostgreSQL instance if Supabase local development is not running.
+docker run --name clientweave-postgres -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=clientweave -p 54322:5432 -d postgres:16-alpine
+DIRECT_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/clientweave \
+  corepack pnpm exec drizzle-kit migrate
+
+corepack pnpm dev
 ```
 
-`pnpm db:reset` must apply checked-in migrations, create the fictional workspace and owner, publish exactly three seeded services, and create native consultation availability. It prints local URLs and non-production owner sign-in details; secrets must not be committed.
+The migration command applies the checked-in schema to the configured database. The
+owner sign-in flow additionally requires valid Supabase credentials in `.env.local`;
+the supplied placeholder values intentionally do not grant access. No seed command is
+currently exposed, so the fictional catalog scenario remains a release fixture rather
+than an automatic local-start result.
 
 Expected startup state:
 
@@ -89,17 +98,20 @@ Expected outcome: new buyer results use only published active configuration, whi
 Run the full validation pipeline:
 
 ```bash
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm contract:check
-pnpm test:unit
-pnpm test:property
-pnpm test:integration
-pnpm test:concurrency
-pnpm test:e2e
-pnpm test:webmcp
-pnpm test:redaction
+# Required by the real PostgreSQL-backed integration and concurrency suites.
+export TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/clientweave
+
+corepack pnpm format
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm contract:check
+corepack pnpm test:unit
+corepack pnpm test:property
+corepack pnpm test:integration
+corepack pnpm test:concurrency
+corepack pnpm test:e2e
+corepack pnpm test:webmcp
+corepack pnpm test:security
 ```
 
 Required evidence by command:
@@ -112,16 +124,18 @@ Required evidence by command:
 | `pnpm test:integration` | Real PostgreSQL migrations, active-only discovery, one-scope access, owner workspace authorization, quote history, confirmation invalidation, idempotent retries, atomic rollback, retention, realtime authorization, and audit events pass. |
 | `pnpm test:concurrency` | At least 50 independent connections contend for one slot; exactly one booking and its one lead succeed, all losers have no partial lead/booking, and retries return the recorded result. |
 | `pnpm test:e2e` | Chromium, Firefox, and WebKit complete the ordinary journey; provenance is legible; no-agent graceful degradation works; owner sees finalized handoff within five seconds. |
-| `pnpm test:webmcp` | Experimental Chromium discovers/invokes exactly six tools and honors the separate human-confirmation boundary. |
-| `pnpm test:redaction` | Credentials, raw scope capabilities, cookies, CSRF values, contact details, unrelated customers, and internal exceptions are absent from errors, logs, realtime messages, and inspector output. |
+| `pnpm test:webmcp` | The registered six-tool boundary, capability headers, and confirmation handoff contract are exercised. |
+| `pnpm test:security` | Credential/contact redaction, private invalidation envelopes, and hostile-input authority boundaries pass. |
 
 The complete CI shortcut may wrap the same stages:
 
 ```bash
-pnpm validate
+corepack pnpm validate
 ```
 
-Expected outcome: zero failing gates. The concurrency and no-agent E2E stages are mandatory, not optional smoke checks.
+Expected outcome: zero failing gates once the required PostgreSQL URL and browser
+coverage are configured. The concurrency and no-agent E2E stages are mandatory,
+not optional smoke checks.
 
 ## Pre-release cohort evidence
 

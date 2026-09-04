@@ -1,0 +1,41 @@
+[
+  {
+    "name": "fixed-and-quantity",
+    "input": {
+      "basePriceMinor": 1000,
+      "answers": { "pages": 2 },
+      "selectedAddons": ["addon"],
+      "rules": [
+        {
+          "id": "quantity",
+          "label": "Pages",
+          "kind": "QUANTITY",
+          "priority": 1,
+          "amountMinor": 100,
+          "quantityField": "pages"
+        },
+        { "id": "addon", "label": "Add-on", "kind": "ADDON", "priority": 2, "amountMinor": 50 }
+      ]
+    },
+    "totalMinor": 1250
+  },
+  {
+    "name": "percent-tie-away-from-zero",
+    "input": {
+      "basePriceMinor": 101,
+      "answers": { "rush": true },
+      "rules": [
+        {
+          "id": "rush",
+          "label": "Rush",
+          "kind": "CONDITIONAL",
+          "priority": 1,
+          "percentBasisPoints": 5000,
+          "field": "rush",
+          "equals": true
+        }
+      ]
+    },
+    "totalMinor": 152
+  }
+]

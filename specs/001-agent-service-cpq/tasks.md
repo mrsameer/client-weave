@@ -35,14 +35,14 @@ No constitutional exceptions are approved for this feature.
 
 **Purpose**: Initialize the pinned TypeScript/Next.js toolchain and the repository structure described by the implementation plan.
 
-- [ ] T001 Create the pnpm workspace scripts and pin Node.js 24, Next.js 16, React 19, TypeScript 6, and runtime/test dependencies in package.json
-- [ ] T002 [P] Configure strict TypeScript and Next.js Node-runtime defaults in tsconfig.json and next.config.ts
-- [ ] T003 [P] Configure ESLint, Prettier, and ignore rules in eslint.config.mjs, .prettierrc.json, and .prettierignore
-- [ ] T004 [P] Define validated local environment placeholders without secrets in .env.local.example and src/server/env.ts
-- [ ] T005 [P] Configure the local PostgreSQL 17 Supabase project in supabase/config.toml
-- [ ] T006 [P] Configure Vitest projects, Playwright browsers, and Puppeteer WebMCP execution in vitest.config.ts, playwright.config.ts, and tests/webmcp/puppeteer.config.ts
-- [ ] T007 [P] Create the responsive App Router root layout and shared Tailwind theme in src/app/layout.tsx and src/styles/globals.css
-- [ ] T008 [P] Document domain/application/adapter dependency boundaries in src/modules/README.md
+- [X] T001 Create the pnpm workspace scripts and pin Node.js 24, Next.js 16, React 19, TypeScript 6, and runtime/test dependencies in package.json
+- [X] T002 [P] Configure strict TypeScript and Next.js Node-runtime defaults in tsconfig.json and next.config.ts
+- [X] T003 [P] Configure ESLint, Prettier, and ignore rules in eslint.config.mjs, .prettierrc.json, and .prettierignore
+- [X] T004 [P] Define validated local environment placeholders without secrets in .env.local.example and src/server/env.ts
+- [X] T005 [P] Configure the local PostgreSQL 17 Supabase project in supabase/config.toml
+- [X] T006 [P] Configure Vitest projects, Playwright browsers, and Puppeteer WebMCP execution in vitest.config.ts, playwright.config.ts, and tests/webmcp/puppeteer.config.ts
+- [X] T007 [P] Create the responsive App Router root layout and shared Tailwind theme in src/app/layout.tsx and src/styles/globals.css
+- [X] T008 [P] Document domain/application/adapter dependency boundaries in src/modules/README.md
 
 **Checkpoint**: The application, database tooling, and all planned test runners can be installed and invoked.
 
@@ -54,28 +54,28 @@ No constitutional exceptions are approved for this feature.
 
 **Critical**: No user-story implementation begins until this phase is complete.
 
-- [ ] T009 Implement the authoritative bounded Zod request, response, capability, and RFC 9457 schemas with unknown-property rejection in src/contracts/schemas/ and src/contracts/problems/problem-details.ts
-- [ ] T010 Generate OpenAPI 3.1, JSON Schema, and client types from the authoritative Zod schemas and fail CI on artifact drift in scripts/generate-contracts.ts, scripts/check-contracts.ts, specs/001-agent-service-cpq/contracts/openapi.yaml, and src/contracts/openapi/generated.ts
-- [ ] T011 [P] Implement pooled runtime and direct migration PostgreSQL clients in src/db/client.ts and drizzle.config.ts
-- [ ] T012 [P] Define Workspace, WorkspaceMember, ServiceOffering, ServiceVersion, ScopeField, PricingRuleSet, PricingRule, and ServiceConstraint tables in src/db/schema/catalog.ts
-- [ ] T013 [P] Define ScopeSession attribution columns, ScopeParticipant, ordered ScopeAssumption, ScopeAnswer, and immutable Quote tables in src/db/schema/scopes.ts
-- [ ] T014 [P] Define AvailabilitySlot, HumanConfirmation, IdempotencyRecord, QualifiedLead, and Booking tables in src/db/schema/finalization.ts
-- [ ] T015 [P] Define append-only AuditEvent and sanitized AgentInvocation tables with the exact READ_ONLY, DRAFT_MUTATION, DERIVED_RECORD_WRITE, and CONSEQUENTIAL_WRITE state-effect catalog in src/db/schema/audit.ts
-- [ ] T016 Create PostgreSQL constraints, indexes, UUIDv7 support, and immutable-history protections for all foundational tables in supabase/migrations/0001_domain_schema.sql
-- [ ] T017 Add one-scope participant policies and workspace-member owner policies in supabase/migrations/0002_authorization_policies.sql
-- [ ] T018 [P] Implement Supabase owner and anonymous authentication clients plus owner sign-in, sign-out, and session refresh in src/server/auth/supabase-server.ts, src/server/auth/supabase-browser.ts, src/app/owner/login/page.tsx, and src/app/owner/auth/actions.ts
-- [ ] T019 Implement the contracted fragment-secret exchange, keyed token hashing, scope-bound `__Host-clientweave_scope` cookie issuance, CSRF binding, participant creation, and fragment clearing in src/server/auth/scope-capability.ts and src/app/api/v1/scopes/exchange/route.ts
-- [ ] T020 [P] Implement scope and workspace object-level authorization guards with non-enumerating failures in src/server/authorization/scope-access.ts and src/server/authorization/workspace-access.ts
-- [ ] T021 [P] Implement safe RFC 9457 error mapping and public correlation IDs in src/contracts/problems/to-problem-response.ts
-- [ ] T022 [P] Implement route/IP plus scope/operation database rate-limit enforcement in src/server/rate-limit/public-rate-limit.ts and supabase/migrations/0003_rate_limits.sql
-- [ ] T023 [P] Configure redacted Pino logs and OpenTelemetry request tracing in src/server/observability/logger.ts and src/server/observability/tracing.ts
-- [ ] T024 [P] Implement append-only audit event creation with closed action/outcome catalogs in src/modules/audit/application/append-audit-event.ts and src/modules/audit/domain/audit-event.ts
-- [ ] T025 [P] Implement private scope revision invalidation publishing and subscription authorization as the sole realtime transport in src/server/realtime/scope-broadcast.ts and supabase/migrations/0004_scope_broadcast.sql
-- [ ] T026 [P] Add the TanStack Query browser provider and authorized API client boundary in src/components/shared/app-providers.tsx and src/contracts/http/client.ts
-- [ ] T027 [P] Create deterministic entity, clock, pricing-rule, scope, and auth factories in tests/fixtures/factories.ts
-- [ ] T028 Add real-PostgreSQL migration and invariant coverage for all required constraints in tests/integration/db/schema.test.ts
-- [ ] T029 Add owner sign-in/sign-out/session refresh plus cross-scope, expired/revoked capability, anonymous-owner, and wrong-workspace authorization coverage in tests/integration/auth/authorization.test.ts
-- [ ] T030 Add RFC 9457 envelope, contracted exchange/service-detail routes, unknown-field rejection, quota, bearer/cookie separation, canonical If-Match handling, bearer rejection on human confirmation, and secret-free error contract coverage in tests/contract/foundation.contract.test.ts
+- [X] T009 Implement the authoritative bounded Zod request, response, capability, and RFC 9457 schemas with unknown-property rejection in src/contracts/schemas/ and src/contracts/problems/problem-details.ts
+- [X] T010 Generate OpenAPI 3.1, JSON Schema, and client types from the authoritative Zod schemas and fail CI on artifact drift in scripts/generate-contracts.ts, scripts/check-contracts.ts, specs/001-agent-service-cpq/contracts/openapi.yaml, and src/contracts/openapi/generated.ts
+- [X] T011 [P] Implement pooled runtime and direct migration PostgreSQL clients in src/db/client.ts and drizzle.config.ts
+- [X] T012 [P] Define Workspace, WorkspaceMember, ServiceOffering, ServiceVersion, ScopeField, PricingRuleSet, PricingRule, and ServiceConstraint tables in src/db/schema/catalog.ts
+- [X] T013 [P] Define ScopeSession attribution columns, ScopeParticipant, ordered ScopeAssumption, ScopeAnswer, and immutable Quote tables in src/db/schema/scopes.ts
+- [X] T014 [P] Define AvailabilitySlot, HumanConfirmation, IdempotencyRecord, QualifiedLead, and Booking tables in src/db/schema/finalization.ts
+- [X] T015 [P] Define append-only AuditEvent and sanitized AgentInvocation tables with the exact READ_ONLY, DRAFT_MUTATION, DERIVED_RECORD_WRITE, and CONSEQUENTIAL_WRITE state-effect catalog in src/db/schema/audit.ts
+- [X] T016 Create PostgreSQL constraints, indexes, UUIDv7 support, and immutable-history protections for all foundational tables in supabase/migrations/0001_domain_schema.sql
+- [X] T017 Add one-scope participant policies and workspace-member owner policies in supabase/migrations/0002_authorization_policies.sql
+- [X] T018 [P] Implement Supabase owner and anonymous authentication clients plus owner sign-in, sign-out, and session refresh in src/server/auth/supabase-server.ts, src/server/auth/supabase-browser.ts, src/app/owner/login/page.tsx, and src/app/owner/auth/actions.ts
+- [X] T019 Implement the contracted fragment-secret exchange, keyed token hashing, scope-bound `__Host-clientweave_scope` cookie issuance, CSRF binding, participant creation, and fragment clearing in src/server/auth/scope-capability.ts and src/app/api/v1/scopes/exchange/route.ts
+- [X] T020 [P] Implement scope and workspace object-level authorization guards with non-enumerating failures in src/server/authorization/scope-access.ts and src/server/authorization/workspace-access.ts
+- [X] T021 [P] Implement safe RFC 9457 error mapping and public correlation IDs in src/contracts/problems/to-problem-response.ts
+- [X] T022 [P] Implement route/IP plus scope/operation database rate-limit enforcement in src/server/rate-limit/public-rate-limit.ts and supabase/migrations/0003_rate_limits.sql
+- [X] T023 [P] Configure redacted Pino logs and OpenTelemetry request tracing in src/server/observability/logger.ts and src/server/observability/tracing.ts
+- [X] T024 [P] Implement append-only audit event creation with closed action/outcome catalogs in src/modules/audit/application/append-audit-event.ts and src/modules/audit/domain/audit-event.ts
+- [X] T025 [P] Implement private scope revision invalidation publishing and subscription authorization as the sole realtime transport in src/server/realtime/scope-broadcast.ts and supabase/migrations/0004_scope_broadcast.sql
+- [X] T026 [P] Add the TanStack Query browser provider and authorized API client boundary in src/components/shared/app-providers.tsx and src/contracts/http/client.ts
+- [X] T027 [P] Create deterministic entity, clock, pricing-rule, scope, and auth factories in tests/fixtures/factories.ts
+- [X] T028 Add real-PostgreSQL migration and invariant coverage for all required constraints in tests/integration/db/schema.test.ts
+- [X] T029 Add owner sign-in/sign-out/session refresh plus cross-scope, expired/revoked capability, anonymous-owner, and wrong-workspace authorization coverage in tests/integration/auth/authorization.test.ts
+- [X] T030 Add RFC 9457 envelope, contracted exchange/service-detail routes, unknown-field rejection, quota, bearer/cookie separation, canonical If-Match handling, bearer rejection on human confirmation, and secret-free error contract coverage in tests/contract/foundation.contract.test.ts
 
 **Checkpoint**: Migrations apply cleanly; shared security and observability boundaries work; user stories may now proceed according to the dependency graph.
 
@@ -91,32 +91,32 @@ No constitutional exceptions are approved for this feature.
 
 > Write these tests first and confirm they fail before implementing the story.
 
-- [ ] T031 [P] [US1] Add contract tests for active-only discovery with explicit inclusions/add-ons/intake/constraints, attributed scope creation/review including assumptions and null values, deterministic quote responses, and safe validation problems in tests/contract/discovery-scope-pricing.contract.test.ts
-- [ ] T032 [P] [US1] Add unit tests for bounded assumption and typed-answer normalization, required-field detection, constraints, bounded hostile prose, and actionable issue ordering in tests/unit/scope/validation.test.ts
-- [ ] T033 [P] [US1] Add golden tests for base, quantity, add-on, conditional, priority, per-line nearest-minor-unit percentage rounding with exact halves away from zero, and rounded line-item reconciliation in tests/unit/pricing/evaluator.test.ts and tests/fixtures/pricing-golden.json
-- [ ] T034 [P] [US1] Add fast-check properties proving input key order and rule insertion order cannot change quote totals or line items in tests/property/pricing-determinism.test.ts
-- [ ] T035 [P] [US1] Add real-database tests for active-only discovery, 30-day durable scopes, quote deduplication, active rule selection, and immutable quote snapshots in tests/integration/catalog-scope-pricing.test.ts
-- [ ] T036 [P] [US1] Add the no-agent discovery-through-current-quote browser journey with reload, incomplete, conflict, and under-budget states in tests/e2e/buyer-scope-price.spec.ts
+- [X] T031 [P] [US1] Add contract tests for active-only discovery with explicit inclusions/add-ons/intake/constraints, attributed scope creation/review including assumptions and null values, deterministic quote responses, and safe validation problems in tests/contract/discovery-scope-pricing.contract.test.ts
+- [X] T032 [P] [US1] Add unit tests for bounded assumption and typed-answer normalization, required-field detection, constraints, bounded hostile prose, and actionable issue ordering in tests/unit/scope/validation.test.ts
+- [X] T033 [P] [US1] Add golden tests for base, quantity, add-on, conditional, priority, per-line nearest-minor-unit percentage rounding with exact halves away from zero, and rounded line-item reconciliation in tests/unit/pricing/evaluator.test.ts and tests/fixtures/pricing-golden.json
+- [X] T034 [P] [US1] Add fast-check properties proving input key order and rule insertion order cannot change quote totals or line items in tests/property/pricing-determinism.test.ts
+- [X] T035 [P] [US1] Add real-database tests for active-only discovery, 30-day durable scopes, quote deduplication, active rule selection, and immutable quote snapshots in tests/integration/catalog-scope-pricing.test.ts
+- [X] T036 [P] [US1] Add the no-agent discovery-through-current-quote browser journey with reload, incomplete, conflict, and under-budget states in tests/e2e/buyer-scope-price.spec.ts
 
 ### Implementation for User Story 1
 
-- [ ] T037 [P] [US1] Implement catalog entities plus Unicode NFKC/lowercase distinct-token need matching ordered by eligibility, descending overlap, and slug, with explicit budget/delivery fit evaluation in src/modules/catalog/domain/service.ts and src/modules/catalog/domain/match-service.ts
-- [ ] T038 [P] [US1] Implement typed scope normalization, missing-field detection, and service-constraint evaluation in src/modules/scope/domain/normalize-scope.ts and src/modules/scope/domain/validate-scope.ts
-- [ ] T039 [P] [US1] Implement canonical JSON hashing, integer-money arithmetic, stable rule ordering, per-line percentage rounding to nearest minor unit with exact halves away from zero, rounded-line summation, and versioned pricing evaluation in src/modules/pricing/domain/canonicalize.ts and src/modules/pricing/domain/evaluator-v1.ts
-- [ ] T040 [P] [US1] Implement workspace-scoped active catalog reads in src/db/repositories/catalog-repository.ts
-- [ ] T041 [P] [US1] Implement authorized scope creation, ordered assumption and answer persistence, trusted actor/time attribution for every material value, expiry, and full attributed review-model reads in src/db/repositories/scope-repository.ts
-- [ ] T042 [P] [US1] Implement immutable quote persistence, input-hash deduplication, and current/stale derivation in src/db/repositories/quote-repository.ts
-- [ ] T043 [US1] Implement the discover-services use case with eligibility-first/overlap/slug ordering, stable budget and delivery fit/conflict reasons, active-service visibility, and no business-state mutation in src/modules/catalog/application/discover-services.ts
-- [ ] T044 [US1] Implement create-scope and get-current-scope use cases with server-derived actor/time provenance for goal, budget, delivery, assumptions, and answers plus validation output in src/modules/scope/application/create-scope.ts and src/modules/scope/application/get-scope-review.ts
-- [ ] T045 [US1] Implement price-scope using a consistent stored snapshot, current immutable rules, evaluator pinning, and audit recording in src/modules/pricing/application/price-scope.ts
-- [ ] T046 [P] [US1] Implement the contracted public discovery and service-detail HTTP handlers in src/app/api/v1/services/route.ts and src/app/api/v1/services/[slug]/route.ts
-- [ ] T047 [US1] Implement scope creation and authorized current-scope HTTP handlers in src/app/api/v1/scopes/route.ts and src/app/api/v1/scopes/current/route.ts
-- [ ] T048 [US1] Implement the deterministic quote HTTP handler in src/app/api/v1/scopes/current/quotes/route.ts
-- [ ] T049 [P] [US1] Build ordinary catalog comparison and service-detail intake surfaces in src/app/(buyer)/page.tsx, src/app/(buyer)/services/[slug]/page.tsx, and src/components/buyer/service-card.tsx
-- [ ] T050 [US1] Build the fragment-bootstrap, durable scope review, validation, and quote panels in src/app/(buyer)/s/[scopeRef]/page.tsx, src/components/buyer/scope-canvas.tsx, and src/components/buyer/quote-panel.tsx
-- [ ] T051 [P] [US1] Implement shared-browser capability registration plus discover, create, and price adapters in src/webmcp/registry.ts, src/webmcp/adapters/discover-services.ts, src/webmcp/adapters/create-scope.ts, and src/webmcp/adapters/price-scope.ts
-- [ ] T052 [US1] Seed one workspace, one owner, exactly three active services, all four pricing rule types, required intake, timing/incompatibility conflicts, an under-budget tradeoff, and initial slots in supabase/seed.sql
-- [ ] T053 [US1] Wire the generated contract client into buyer and WebMCP adapters and make pnpm contract:check cover the three US1 capabilities in src/contracts/http/buyer-client.ts and scripts/check-agent-capabilities.ts
+- [X] T037 [P] [US1] Implement catalog entities plus Unicode NFKC/lowercase distinct-token need matching ordered by eligibility, descending overlap, and slug, with explicit budget/delivery fit evaluation in src/modules/catalog/domain/service.ts and src/modules/catalog/domain/match-service.ts
+- [X] T038 [P] [US1] Implement typed scope normalization, missing-field detection, and service-constraint evaluation in src/modules/scope/domain/normalize-scope.ts and src/modules/scope/domain/validate-scope.ts
+- [X] T039 [P] [US1] Implement canonical JSON hashing, integer-money arithmetic, stable rule ordering, per-line percentage rounding to nearest minor unit with exact halves away from zero, rounded-line summation, and versioned pricing evaluation in src/modules/pricing/domain/canonicalize.ts and src/modules/pricing/domain/evaluator-v1.ts
+- [X] T040 [P] [US1] Implement workspace-scoped active catalog reads in src/db/repositories/catalog-repository.ts
+- [X] T041 [P] [US1] Implement authorized scope creation, ordered assumption and answer persistence, trusted actor/time attribution for every material value, expiry, and full attributed review-model reads in src/db/repositories/scope-repository.ts
+- [X] T042 [P] [US1] Implement immutable quote persistence, input-hash deduplication, and current/stale derivation in src/db/repositories/quote-repository.ts
+- [X] T043 [US1] Implement the discover-services use case with eligibility-first/overlap/slug ordering, stable budget and delivery fit/conflict reasons, active-service visibility, and no business-state mutation in src/modules/catalog/application/discover-services.ts
+- [X] T044 [US1] Implement create-scope and get-current-scope use cases with server-derived actor/time provenance for goal, budget, delivery, assumptions, and answers plus validation output in src/modules/scope/application/create-scope.ts and src/modules/scope/application/get-scope-review.ts
+- [X] T045 [US1] Implement price-scope using a consistent stored snapshot, current immutable rules, evaluator pinning, and audit recording in src/modules/pricing/application/price-scope.ts
+- [X] T046 [P] [US1] Implement the contracted public discovery and service-detail HTTP handlers in src/app/api/v1/services/route.ts and src/app/api/v1/services/[slug]/route.ts
+- [X] T047 [US1] Implement scope creation and authorized current-scope HTTP handlers in src/app/api/v1/scopes/route.ts and src/app/api/v1/scopes/current/route.ts
+- [X] T048 [US1] Implement the deterministic quote HTTP handler in src/app/api/v1/scopes/current/quotes/route.ts
+- [X] T049 [P] [US1] Build ordinary catalog comparison and service-detail intake surfaces in src/app/(buyer)/page.tsx, src/app/(buyer)/services/[slug]/page.tsx, and src/components/buyer/service-card.tsx
+- [X] T050 [US1] Build the fragment-bootstrap, durable scope review, validation, and quote panels in src/app/(buyer)/s/[scopeRef]/page.tsx, src/components/buyer/scope-canvas.tsx, and src/components/buyer/quote-panel.tsx
+- [X] T051 [P] [US1] Implement shared-browser capability registration plus discover, create, and price adapters in src/webmcp/registry.ts, src/webmcp/adapters/discover-services.ts, src/webmcp/adapters/create-scope.ts, and src/webmcp/adapters/price-scope.ts
+- [X] T052 [US1] Seed one workspace, one owner, exactly three active services, all four pricing rule types, required intake, timing/incompatibility conflicts, an under-budget tradeoff, and initial slots in supabase/seed.sql
+- [X] T053 [US1] Wire the generated contract client into buyer and WebMCP adapters and make pnpm contract:check cover the three US1 capabilities in src/contracts/http/buyer-client.ts and scripts/check-agent-capabilities.ts
 
 **Checkpoint**: User Story 1 is independently usable without an agent and exposes matching agent capabilities over the same use cases. This is the suggested MVP implementation checkpoint, not a release candidate until US3 and the complete release-journey gates pass.
 
@@ -130,20 +130,20 @@ No constitutional exceptions are approved for this feature.
 
 ### Tests for User Story 2
 
-- [ ] T054 [P] [US2] Add unit tests for general/pricing/finalization revision increments, edit-then-revert staleness, per-value goal/budget/delivery/assumption/answer provenance, assumption diffing, and mutation issue output in tests/unit/scope/mutation.test.ts
-- [ ] T055 [P] [US2] Add real-database tests for optimistic revision conflicts, atomic answer/audit writes, stale quote derivation, and private topic authorization in tests/integration/scope-collaboration.test.ts
-- [ ] T056 [P] [US2] Add two-client browser coverage for visible provenance, dirty-field collision handling, accessible announcements, and two-second convergence in tests/e2e/scope-collaboration.spec.ts
-- [ ] T057 [P] [US2] Add WebMCP coverage for agent updates, human corrections, approved tradeoffs, and shared revision convergence in tests/webmcp/update-scope.spec.ts
+- [X] T054 [P] [US2] Add unit tests for general/pricing/finalization revision increments, edit-then-revert staleness, per-value goal/budget/delivery/assumption/answer provenance, assumption diffing, and mutation issue output in tests/unit/scope/mutation.test.ts
+- [X] T055 [P] [US2] Add real-database tests for optimistic revision conflicts, atomic answer/audit writes, stale quote derivation, and private topic authorization in tests/integration/scope-collaboration.test.ts
+- [X] T056 [P] [US2] Add two-client browser coverage for visible provenance, dirty-field collision handling, accessible announcements, and two-second convergence in tests/e2e/scope-collaboration.spec.ts
+- [X] T057 [P] [US2] Add WebMCP coverage for agent updates, human corrections, approved tradeoffs, and shared revision convergence in tests/webmcp/update-scope.spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T058 [P] [US2] Implement allowlisted typed scope patch validation and revision-impact classification in src/modules/scope/domain/scope-patch.ts
-- [ ] T059 [US2] Implement locked optimistic scope mutation, assumption diffing, trusted actor/time attribution for every changed material value, revision increments, confirmation invalidation, audit append, and post-commit invalidation in src/modules/scope/application/update-scope.ts
-- [ ] T060 [US2] Add canonical quoted If-Match precondition handling without a duplicate body revision and return the complete attributed review model from src/app/api/v1/scopes/current/route.ts
-- [ ] T061 [P] [US2] Implement authorized realtime invalidation subscription with refetch and polling fallback in src/server/realtime/scope-subscription.ts and src/components/buyer/use-live-scope.ts
-- [ ] T062 [US2] Build goal, budget, delivery, bounded-assumption, and typed-answer editors with per-value actor/time labels, stale-quote cues, tradeoff controls, and local collision review in src/components/buyer/scope-editor.tsx and src/components/buyer/provenance-badge.tsx
-- [ ] T063 [US2] Add live-region announcements and focus restoration for remote changes and revision errors in src/components/buyer/scope-live-status.tsx
-- [ ] T064 [US2] Implement the update_scope adapter with expected_revision translated to HTTP If-Match, trusted actor derivation, complete attributed responses, and sanitized invocation recording in src/webmcp/adapters/update-scope.ts
+- [X] T058 [P] [US2] Implement allowlisted typed scope patch validation and revision-impact classification in src/modules/scope/domain/scope-patch.ts
+- [X] T059 [US2] Implement locked optimistic scope mutation, assumption diffing, trusted actor/time attribution for every changed material value, revision increments, confirmation invalidation, audit append, and post-commit invalidation in src/modules/scope/application/update-scope.ts
+- [X] T060 [US2] Add canonical quoted If-Match precondition handling without a duplicate body revision and return the complete attributed review model from src/app/api/v1/scopes/current/route.ts
+- [X] T061 [P] [US2] Implement authorized realtime invalidation subscription with refetch and polling fallback in src/server/realtime/scope-subscription.ts and src/components/buyer/use-live-scope.ts
+- [X] T062 [US2] Build goal, budget, delivery, bounded-assumption, and typed-answer editors with per-value actor/time labels, stale-quote cues, tradeoff controls, and local collision review in src/components/buyer/scope-editor.tsx and src/components/buyer/provenance-badge.tsx
+- [X] T063 [US2] Add live-region announcements and focus restoration for remote changes and revision errors in src/components/buyer/scope-live-status.tsx
+- [X] T064 [US2] Implement the update_scope adapter with expected_revision translated to HTTP If-Match, trusted actor derivation, complete attributed responses, and sanitized invocation recording in src/webmcp/adapters/update-scope.ts
 
 **Checkpoint**: User Story 2 independently proves a shared attributable scope and safe conflict recovery using fixture-created scope state.
 
@@ -157,29 +157,29 @@ No constitutional exceptions are approved for this feature.
 
 ### Tests for User Story 3
 
-- [ ] T065 [P] [US3] Add contract tests for availability, complete attributed final-summary snapshots with current eligible quote line items, human-only confirmation, required idempotency, and finalization problem codes in tests/contract/availability-finalization.contract.test.ts
-- [ ] T066 [P] [US3] Add unit tests for quote eligibility, canonical final-summary hashes, confirmation invalidation, minimal contact, and finalization state transitions in tests/unit/finalization/eligibility.test.ts
-- [ ] T067 [P] [US3] Add real-database tests for human-origin enforcement, stale summary/quote/slot rejection, same/different idempotency retries, fixed lock order, atomic rollback, and audit events in tests/integration/finalization.test.ts
-- [ ] T068 [P] [US3] Add a 50-independent-connection single-slot contention test that asserts exactly one lead/booking and no loser partial state in tests/concurrency/single-slot-finalization.test.ts
-- [ ] T069 [P] [US3] Add ordinary-browser availability, contact, summary-change invalidation, direct confirmation, booking, and retry coverage in tests/e2e/buyer-finalization.spec.ts
-- [ ] T070 [P] [US3] Add WebMCP tests proving no confirmation tool exists, read-only availability has no side effects, unconfirmed finalization fails, and post-human-confirmation finalization succeeds once in tests/webmcp/finalization-boundary.spec.ts
+- [X] T065 [P] [US3] Add contract tests for availability, complete attributed final-summary snapshots with current eligible quote line items, human-only confirmation, required idempotency, and finalization problem codes in tests/contract/availability-finalization.contract.test.ts
+- [X] T066 [P] [US3] Add unit tests for quote eligibility, canonical final-summary hashes, confirmation invalidation, minimal contact, and finalization state transitions in tests/unit/finalization/eligibility.test.ts
+- [X] T067 [P] [US3] Add real-database tests for human-origin enforcement, stale summary/quote/slot rejection, same/different idempotency retries, fixed lock order, atomic rollback, and audit events in tests/integration/finalization.test.ts
+- [X] T068 [P] [US3] Add a 50-independent-connection single-slot contention test that asserts exactly one lead/booking and no loser partial state in tests/concurrency/single-slot-finalization.test.ts
+- [X] T069 [P] [US3] Add ordinary-browser availability, contact, summary-change invalidation, direct confirmation, booking, and retry coverage in tests/e2e/buyer-finalization.spec.ts
+- [X] T070 [P] [US3] Add WebMCP tests proving no confirmation tool exists, read-only availability has no side effects, unconfirmed finalization fails, and post-human-confirmation finalization succeeds once in tests/webmcp/finalization-boundary.spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T071 [P] [US3] Implement timezone-aware currently-bookable slot filtering with no hold side effect in src/modules/availability/domain/bookable-slots.ts
-- [ ] T072 [P] [US3] Implement workspace-scoped slot reads and conditional locked booking claims in src/db/repositories/availability-repository.ts
-- [ ] T073 [US3] Implement find-consultation-slots with current-quote eligibility checks in src/modules/availability/application/find-consultation-slots.ts
-- [ ] T074 [P] [US3] Implement canonical server-authored final summaries containing the complete attributed scope snapshot, service constraints, current eligible quote totals/line items, selection details, notices, and short-lived nonces in src/modules/finalization/domain/final-summary.ts
-- [ ] T075 [US3] Implement direct-human confirmation recording with trusted-origin enforcement and current revision/hash checks in src/modules/finalization/application/record-human-confirmation.ts
-- [ ] T076 [P] [US3] Implement idempotency ledger claim/replay semantics and workspace-scoped lead/booking writes in src/db/repositories/finalization-repository.ts
-- [ ] T077 [US3] Implement the fixed-lock-order finalization transaction, invariant rechecks, retryable transaction handling, audit events, and stored response in src/modules/finalization/application/finalize-confirmed-scope.ts
-- [ ] T078 [P] [US3] Implement the read-only availability HTTP handler in src/app/api/v1/scopes/current/availability/route.ts
-- [ ] T079 [US3] Implement final-summary and trusted human-confirmation HTTP handlers in src/app/api/v1/scopes/current/final-summary/route.ts and src/app/api/v1/scopes/current/human-confirmations/route.ts
-- [ ] T080 [US3] Implement the idempotent finalization HTTP handler in src/app/api/v1/scopes/current/finalizations/route.ts
-- [ ] T081 [P] [US3] Build timezone-aware slot selection with unavailable-slot recovery in src/components/buyer/availability-picker.tsx
-- [ ] T082 [US3] Build minimal contact, exact rendering of the server-returned complete attributed final review, direct confirmation, pending/result, and safe failure states in src/components/buyer/finalization-panel.tsx and src/components/buyer/final-summary.tsx
-- [ ] T083 [P] [US3] Implement find_consultation_slots and finalize_confirmed_scope adapters without a confirmation adapter in src/webmcp/adapters/find-consultation-slots.ts and src/webmcp/adapters/finalize-confirmed-scope.ts
-- [ ] T084 [US3] Complete exact-six capability schema/state-effect validation and sanitized per-invocation recording in src/webmcp/registry.ts and scripts/check-agent-capabilities.ts
+- [X] T071 [P] [US3] Implement timezone-aware currently-bookable slot filtering with no hold side effect in src/modules/availability/domain/bookable-slots.ts
+- [X] T072 [P] [US3] Implement workspace-scoped slot reads and conditional locked booking claims in src/db/repositories/availability-repository.ts
+- [X] T073 [US3] Implement find-consultation-slots with current-quote eligibility checks in src/modules/availability/application/find-consultation-slots.ts
+- [X] T074 [P] [US3] Implement canonical server-authored final summaries containing the complete attributed scope snapshot, service constraints, current eligible quote totals/line items, selection details, notices, and short-lived nonces in src/modules/finalization/domain/final-summary.ts
+- [X] T075 [US3] Implement direct-human confirmation recording with trusted-origin enforcement and current revision/hash checks in src/modules/finalization/application/record-human-confirmation.ts
+- [X] T076 [P] [US3] Implement idempotency ledger claim/replay semantics and workspace-scoped lead/booking writes in src/db/repositories/finalization-repository.ts
+- [X] T077 [US3] Implement the fixed-lock-order finalization transaction, invariant rechecks, retryable transaction handling, audit events, and stored response in src/modules/finalization/application/finalize-confirmed-scope.ts
+- [X] T078 [P] [US3] Implement the read-only availability HTTP handler in src/app/api/v1/scopes/current/availability/route.ts
+- [X] T079 [US3] Implement final-summary and trusted human-confirmation HTTP handlers in src/app/api/v1/scopes/current/final-summary/route.ts and src/app/api/v1/scopes/current/human-confirmations/route.ts
+- [X] T080 [US3] Implement the idempotent finalization HTTP handler in src/app/api/v1/scopes/current/finalizations/route.ts
+- [X] T081 [P] [US3] Build timezone-aware slot selection with unavailable-slot recovery in src/components/buyer/availability-picker.tsx
+- [X] T082 [US3] Build minimal contact, exact rendering of the server-returned complete attributed final review, direct confirmation, pending/result, and safe failure states in src/components/buyer/finalization-panel.tsx and src/components/buyer/final-summary.tsx
+- [X] T083 [P] [US3] Implement find_consultation_slots and finalize_confirmed_scope adapters without a confirmation adapter in src/webmcp/adapters/find-consultation-slots.ts and src/webmcp/adapters/finalize-confirmed-scope.ts
+- [X] T084 [US3] Complete exact-six capability schema/state-effect validation and sanitized per-invocation recording in src/webmcp/registry.ts and scripts/check-agent-capabilities.ts
 
 **Checkpoint**: User Story 3 independently proves the human authority boundary, all-or-nothing finalization, retry safety, and single-slot exclusivity.
 
@@ -193,22 +193,22 @@ No constitutional exceptions are approved for this feature.
 
 ### Tests for User Story 4
 
-- [ ] T085 [P] [US4] Add unit tests for complete service-graph validation, typed rule operands, active-offering limits, immutable version increments, and executable-text rejection in tests/unit/catalog/configuration.test.ts
-- [ ] T086 [P] [US4] Add real-database tests for workspace authorization, atomic publication, activation/deactivation, rule pointer changes, historical quote replay, and slot blocking in tests/integration/owner-configuration.test.ts
-- [ ] T087 [P] [US4] Add owner-browser coverage for the under-15-minute template configuration, actionable invalid publication, catalog visibility, v2 history, and slot blocking in tests/e2e/owner-configuration.spec.ts
+- [X] T085 [P] [US4] Add unit tests for complete service-graph validation, typed rule operands, active-offering limits, immutable version increments, and executable-text rejection in tests/unit/catalog/configuration.test.ts
+- [X] T086 [P] [US4] Add real-database tests for workspace authorization, atomic publication, activation/deactivation, rule pointer changes, historical quote replay, and slot blocking in tests/integration/owner-configuration.test.ts
+- [X] T087 [P] [US4] Add owner-browser coverage for the under-15-minute template configuration, actionable invalid publication, catalog visibility, v2 history, and slot blocking in tests/e2e/owner-configuration.spec.ts
 
 ### Implementation for User Story 4
 
-- [ ] T088 [P] [US4] Implement closed service, field, pricing-rule, and constraint draft schemas plus complete-graph validation in src/modules/catalog/domain/service-configuration.ts
-- [ ] T089 [P] [US4] Implement service/version/rule publication and activation persistence with immutable snapshots and locked active-pointer switches in src/db/repositories/configuration-repository.ts
-- [ ] T090 [P] [US4] Implement owner slot creation, overlap validation, blocking, and booked-history protection in src/modules/availability/application/manage-availability.ts
-- [ ] T091 [US4] Implement authenticated create/edit/publish/activate/deactivate service use cases with workspace scoping and audit events in src/modules/catalog/application/manage-services.ts
-- [ ] T092 [P] [US4] Implement owner service and availability server actions with safe not-found behavior in src/app/owner/services/actions.ts and src/app/owner/availability/actions.ts
-- [ ] T093 [P] [US4] Build the owner service list and template-based draft editor shell in src/app/owner/services/page.tsx, src/app/owner/services/[serviceId]/page.tsx, and src/components/owner/service-editor.tsx
-- [ ] T094 [US4] Build typed intake-field, pricing-rule priority, delivery/incompatibility constraint, and publication validation editors in src/components/owner/scope-field-editor.tsx, src/components/owner/pricing-rule-editor.tsx, and src/components/owner/constraint-editor.tsx
-- [ ] T095 [P] [US4] Build the timezone-aware availability management surface in src/app/owner/availability/page.tsx and src/components/owner/availability-manager.tsx
-- [ ] T096 [US4] Add historical quote replay through retained evaluator versions and persisted rule/input fingerprints in src/modules/pricing/application/replay-quote.ts and src/modules/pricing/domain/evaluator-registry.ts
-- [ ] T097 [US4] Surface active service/rule versions and historical preservation notices in src/components/owner/version-history.tsx
+- [X] T088 [P] [US4] Implement closed service, field, pricing-rule, and constraint draft schemas plus complete-graph validation in src/modules/catalog/domain/service-configuration.ts
+- [X] T089 [P] [US4] Implement service/version/rule publication and activation persistence with immutable snapshots and locked active-pointer switches in src/db/repositories/configuration-repository.ts
+- [X] T090 [P] [US4] Implement owner slot creation, overlap validation, blocking, and booked-history protection in src/modules/availability/application/manage-availability.ts
+- [X] T091 [US4] Implement authenticated create/edit/publish/activate/deactivate service use cases with workspace scoping and audit events in src/modules/catalog/application/manage-services.ts
+- [X] T092 [P] [US4] Implement owner service and availability server actions with safe not-found behavior in src/app/owner/services/actions.ts and src/app/owner/availability/actions.ts
+- [X] T093 [P] [US4] Build the owner service list and template-based draft editor shell in src/app/owner/services/page.tsx, src/app/owner/services/[serviceId]/page.tsx, and src/components/owner/service-editor.tsx
+- [X] T094 [US4] Build typed intake-field, pricing-rule priority, delivery/incompatibility constraint, and publication validation editors in src/components/owner/scope-field-editor.tsx, src/components/owner/pricing-rule-editor.tsx, and src/components/owner/constraint-editor.tsx
+- [X] T095 [P] [US4] Build the timezone-aware availability management surface in src/app/owner/availability/page.tsx and src/components/owner/availability-manager.tsx
+- [X] T096 [US4] Add historical quote replay through retained evaluator versions and persisted rule/input fingerprints in src/modules/pricing/application/replay-quote.ts and src/modules/pricing/domain/evaluator-registry.ts
+- [X] T097 [US4] Surface active service/rule versions and historical preservation notices in src/components/owner/version-history.tsx
 
 **Checkpoint**: User Story 4 independently changes only future catalog, price, and availability results while preserving historical commercial records.
 
@@ -222,21 +222,21 @@ No constitutional exceptions are approved for this feature.
 
 ### Tests for User Story 5
 
-- [ ] T098 [P] [US5] Add real-database tests for workspace-scoped lead list/detail projections, chronological audit sequences, and under-five-second finalized-lead visibility in tests/integration/lead-review.test.ts
-- [ ] T099 [P] [US5] Add contract tests for exact-six inspector metadata, the exact four-value state-effect catalog, current-scope invocation filtering, maximum result bounds, and secret/contact/error redaction in tests/contract/inspector.contract.test.ts
-- [ ] T100 [P] [US5] Add owner-browser coverage for lead handoff contents, provenance, quote/rule replay metadata, booking, and ordered activity in tests/e2e/owner-lead-review.spec.ts
-- [ ] T101 [P] [US5] Add redaction scans across logs, problems, realtime messages, inspector output, and owner/public response boundaries in tests/security/redaction.test.ts
+- [X] T098 [P] [US5] Add real-database tests for workspace-scoped lead list/detail projections, chronological audit sequences, and under-five-second finalized-lead visibility in tests/integration/lead-review.test.ts
+- [X] T099 [P] [US5] Add contract tests for exact-six inspector metadata, the exact four-value state-effect catalog, current-scope invocation filtering, maximum result bounds, and secret/contact/error redaction in tests/contract/inspector.contract.test.ts
+- [X] T100 [P] [US5] Add owner-browser coverage for lead handoff contents, provenance, quote/rule replay metadata, booking, and ordered activity in tests/e2e/owner-lead-review.spec.ts
+- [X] T101 [P] [US5] Add redaction scans across logs, problems, realtime messages, inspector output, and owner/public response boundaries in tests/security/redaction.test.ts
 
 ### Implementation for User Story 5
 
-- [ ] T102 [P] [US5] Implement workspace-scoped lead list/detail repositories with immutable scope, quote, contact, booking, and audit projections in src/db/repositories/lead-repository.ts
-- [ ] T103 [P] [US5] Implement authorized lead handoff and chronological activity queries in src/modules/leads/application/get-lead-handoff.ts and src/modules/leads/application/list-leads.ts
-- [ ] T104 [P] [US5] Implement scope-bound capability summaries and sanitized invocation queries in src/webmcp/inspector.ts
-- [ ] T105 [US5] Implement the authorized inspector HTTP handler in src/app/api/v1/scopes/current/inspector/route.ts
-- [ ] T106 [P] [US5] Build authenticated lead list and detail routes with non-enumerating wrong-workspace behavior in src/app/owner/leads/page.tsx and src/app/owner/leads/[leadId]/page.tsx
-- [ ] T107 [US5] Build the unified lead handoff, provenance, quote snapshot, booking, and chronological action-history components in src/components/owner/lead-handoff.tsx and src/components/owner/action-history.tsx
-- [ ] T108 [P] [US5] Build the collapsible exact-six-tool inspector with state-effect, confirmation, outcome, reason, and time fields in src/components/buyer/tool-inspector.tsx
-- [ ] T109 [US5] Connect every WebMCP adapter to sanitized invocation persistence and keep raw arguments, tokens, contacts, and exception internals out of src/webmcp/registry.ts
+- [X] T102 [P] [US5] Implement workspace-scoped lead list/detail repositories with immutable scope, quote, contact, booking, and audit projections in src/db/repositories/lead-repository.ts
+- [X] T103 [P] [US5] Implement authorized lead handoff and chronological activity queries in src/modules/leads/application/get-lead-handoff.ts and src/modules/leads/application/list-leads.ts
+- [X] T104 [P] [US5] Implement scope-bound capability summaries and sanitized invocation queries in src/webmcp/inspector.ts
+- [X] T105 [US5] Implement the authorized inspector HTTP handler in src/app/api/v1/scopes/current/inspector/route.ts
+- [X] T106 [P] [US5] Build authenticated lead list and detail routes with non-enumerating wrong-workspace behavior in src/app/owner/leads/page.tsx and src/app/owner/leads/[leadId]/page.tsx
+- [X] T107 [US5] Build the unified lead handoff, provenance, quote snapshot, booking, and chronological action-history components in src/components/owner/lead-handoff.tsx and src/components/owner/action-history.tsx
+- [X] T108 [P] [US5] Build the collapsible exact-six-tool inspector with state-effect, confirmation, outcome, reason, and time fields in src/components/buyer/tool-inspector.tsx
+- [X] T109 [US5] Connect every WebMCP adapter to sanitized invocation persistence and keep raw arguments, tokens, contacts, and exception internals out of src/webmcp/registry.ts
 
 **Checkpoint**: User Story 5 independently provides a complete authorized seller handoff and a safe buyer-scope activity inspector.
 
@@ -246,16 +246,16 @@ No constitutional exceptions are approved for this feature.
 
 **Purpose**: Complete lifecycle, security, accessibility, performance, documentation, and release verification that span stories.
 
-- [ ] T110 [P] Implement scheduled, authenticated, idempotent 30-day draft expiration, participant revocation, finalized-retention cleanup, and deletion audit coverage in src/modules/scope/application/expire-drafts.ts, src/app/api/internal/retention/route.ts, vercel.json, and tests/integration/retention.test.ts
-- [ ] T111 [P] Add no-referrer, restrictive CSP, secure-cookie, CSRF/origin, cache, and no-third-party-script protections in src/middleware.ts and next.config.ts
-- [ ] T112 [P] Add automated keyboard, label/error, focus, live-region, color-independent cue, contrast, and responsive hierarchy checks in tests/e2e/accessibility.spec.ts
-- [ ] T113 [P] Add timed success-criteria measurements for three-minute buyer completion, sub-500 ms p95 ordinary interactions, exactly 100 alternating updates across 10 fresh scopes with at least 95 converging within two seconds, and 20 fresh-scope finalizations with at least 19 owner-visible within five seconds; document one excluded warm-up per browser/environment, monotonic-clock boundaries, exact pass counts, and the local/CI profile in tests/e2e/performance-targets.spec.ts
-- [ ] T114 [P] Add prompt-like text, HTML/script, bidi, oversized Unicode, typed-boundary fuzzing, and authority-noninterference coverage in tests/security/untrusted-content.test.ts
-- [ ] T115 [P] Configure CI stages for format, lint, typecheck, contracts, unit, property, integration, concurrency, E2E, WebMCP, and redaction gates in .github/workflows/validate.yml
-- [ ] T116 Document architecture, local operation, migration/rollback, evaluator compatibility, threat boundaries, and retention behavior in README.md and docs/operations.md
-- [ ] T117 Validate and update every command and expected result in specs/001-agent-service-cpq/quickstart.md against the implemented repository
-- [ ] T118 [P] Add one uninterrupted no-agent journey covering discovery, scope creation and reload, validation, pricing, stale-quote recovery, availability, human confirmation, finalization, retry, and owner handoff in tests/e2e/complete-ordinary-journey.spec.ts
-- [ ] T119 [P] Add one uninterrupted WebMCP journey plus the 20 version-controlled capability/recovery scenarios covering all six capabilities, shared-state convergence, direct page confirmation, finalization, and side-effect assertions in tests/webmcp/complete-agent-journey.spec.ts and tests/fixtures/agent-journeys.json
+- [X] T110 [P] Implement scheduled, authenticated, idempotent 30-day draft expiration, participant revocation, finalized-retention cleanup, and deletion audit coverage in src/modules/scope/application/expire-drafts.ts, src/app/api/internal/retention/route.ts, vercel.json, and tests/integration/retention.test.ts
+- [X] T111 [P] Add no-referrer, restrictive CSP, secure-cookie, CSRF/origin, cache, and no-third-party-script protections in src/middleware.ts and next.config.ts
+- [X] T112 [P] Add automated keyboard, label/error, focus, live-region, color-independent cue, contrast, and responsive hierarchy checks in tests/e2e/accessibility.spec.ts
+- [X] T113 [P] Add timed success-criteria measurements for three-minute buyer completion, sub-500 ms p95 ordinary interactions, exactly 100 alternating updates across 10 fresh scopes with at least 95 converging within two seconds, and 20 fresh-scope finalizations with at least 19 owner-visible within five seconds; document one excluded warm-up per browser/environment, monotonic-clock boundaries, exact pass counts, and the local/CI profile in tests/e2e/performance-targets.spec.ts
+- [X] T114 [P] Add prompt-like text, HTML/script, bidi, oversized Unicode, typed-boundary fuzzing, and authority-noninterference coverage in tests/security/untrusted-content.test.ts
+- [X] T115 [P] Configure CI stages for format, lint, typecheck, contracts, unit, property, integration, concurrency, E2E, WebMCP, and redaction gates in .github/workflows/validate.yml
+- [X] T116 Document architecture, local operation, migration/rollback, evaluator compatibility, threat boundaries, and retention behavior in README.md and docs/operations.md
+- [X] T117 Validate and update every command and expected result in specs/001-agent-service-cpq/quickstart.md against the implemented repository
+- [X] T118 [P] Add one uninterrupted no-agent journey covering discovery, scope creation and reload, validation, pricing, stale-quote recovery, availability, human confirmation, finalization, retry, and owner handoff in tests/e2e/complete-ordinary-journey.spec.ts
+- [X] T119 [P] Add one uninterrupted WebMCP journey plus the 20 version-controlled capability/recovery scenarios covering all six capabilities, shared-state convergence, direct page confirmation, finalization, and side-effect assertions in tests/webmcp/complete-agent-journey.spec.ts and tests/fixtures/agent-journeys.json
 - [ ] T120 Conduct the pre-release study with 10 first-time buyers, 5 first-time owner-role participants, and 20 fixed agent journeys and record anonymized protocol, raw outcomes, exact pass counts, timing environment, and failures in specs/001-agent-service-cpq/usability-report.md
 - [ ] T121 Run the complete pnpm validate release gate and record FR-001–FR-035, SC-001–SC-012, Constitution Principles I–V, and pre-release study evidence in specs/001-agent-service-cpq/validation-report.md
 

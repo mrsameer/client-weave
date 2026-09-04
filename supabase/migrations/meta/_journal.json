@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788348617110,
+      "tag": "0000_glamorous_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788421442706,
+      "tag": "0001_fix_human_confirmation_revision",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788422342451,
+      "tag": "0002_closed_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788423420385,
+      "tag": "0003_skinny_hellcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788423588704,
+      "tag": "0004_thin_mockingbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788455983551,
+      "tag": "0005_regular_mattie_franklin",
+      "breakpoints": true
+    }
+  ]
+}

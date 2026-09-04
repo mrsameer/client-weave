@@ -1,0 +1,1017 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClientWeave generated contract schemas",
+  "definitions": {
+    "capabilities": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "minItems": 6,
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "discover_services",
+              "create_scope",
+              "update_scope",
+              "price_scope",
+              "find_consultation_slots",
+              "finalize_confirmed_scope"
+            ]
+          },
+          "stateEffect": {
+            "type": "string",
+            "enum": [
+              "READ_ONLY",
+              "DRAFT_MUTATION",
+              "DERIVED_RECORD_WRITE",
+              "CONSEQUENTIAL_WRITE"
+            ]
+          },
+          "requiresHumanConfirmation": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "stateEffect",
+          "requiresHumanConfirmation"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "discoverServicesQuery": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "need": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "budgetMaxMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "desiredDeliveryDate": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+        },
+        "limit": {
+          "default": 5,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "need",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "createScopeRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "serviceSlug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{3,100}$"
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "budgetMaxMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "targetDeliveryDate": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+        },
+        "assumptions": {
+          "default": [],
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "answers": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "serviceSlug",
+        "goal",
+        "assumptions",
+        "answers"
+      ],
+      "additionalProperties": false
+    },
+    "updateScopeRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "goal": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "budgetMaxMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetDeliveryDate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assumptions": {
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "answers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "priceScopeRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "expectedRevision"
+      ],
+      "additionalProperties": false
+    },
+    "finalizationRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "confirmationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "SUBMIT_LEAD",
+            "SUBMIT_LEAD_AND_BOOK"
+          ]
+        }
+      },
+      "required": [
+        "confirmationId",
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "quoteResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "INCOMPLETE",
+            "CONFLICTED",
+            "CURRENT",
+            "STALE"
+          ]
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "minimumTotalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "maximumTotalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ruleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "amountMinor": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "BASE",
+                  "QUANTITY",
+                  "ADDON",
+                  "CONDITIONAL"
+                ]
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "ruleId",
+              "label",
+              "amountMinor",
+              "kind",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "actor": {
+                "type": "string",
+                "enum": [
+                  "HUMAN",
+                  "AGENT",
+                  "IMPORTED",
+                  "SYSTEM"
+                ]
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "value",
+              "actor",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "field": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "MISSING",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "code",
+              "field",
+              "message",
+              "severity"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "calculatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "pricingRuleVersion": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "status",
+        "eligible",
+        "lineItems",
+        "assumptions",
+        "issues",
+        "calculatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "scopeReview": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        },
+        "revision": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "serviceSlug": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "goal": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actor": {
+              "type": "string",
+              "enum": [
+                "HUMAN",
+                "AGENT",
+                "IMPORTED",
+                "SYSTEM"
+              ]
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "value",
+            "actor",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "budgetMaxMinor": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actor": {
+              "type": "string",
+              "enum": [
+                "HUMAN",
+                "AGENT",
+                "IMPORTED",
+                "SYSTEM"
+              ]
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "value",
+            "actor",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "targetDeliveryDate": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actor": {
+              "type": "string",
+              "enum": [
+                "HUMAN",
+                "AGENT",
+                "IMPORTED",
+                "SYSTEM"
+              ]
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "value",
+            "actor",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "assumptions": {
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "actor": {
+                "type": "string",
+                "enum": [
+                  "HUMAN",
+                  "AGENT",
+                  "IMPORTED",
+                  "SYSTEM"
+                ]
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "value",
+              "actor",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "answers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "actor": {
+                "type": "string",
+                "enum": [
+                  "HUMAN",
+                  "AGENT",
+                  "IMPORTED",
+                  "SYSTEM"
+                ]
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "value",
+              "actor",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "actor": {
+          "type": "string",
+          "enum": [
+            "HUMAN",
+            "AGENT",
+            "IMPORTED",
+            "SYSTEM"
+          ]
+        },
+        "missingFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "field": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "MISSING",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "code",
+              "field",
+              "message",
+              "severity"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "field": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "MISSING",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "code",
+              "field",
+              "message",
+              "severity"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "INCOMPLETE",
+                    "CONFLICTED",
+                    "CURRENT",
+                    "STALE"
+                  ]
+                },
+                "eligible": {
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minimumTotalMinor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100000000000
+                },
+                "maximumTotalMinor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100000000000
+                },
+                "lineItems": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ruleId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "label": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "amountMinor": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "BASE",
+                          "QUANTITY",
+                          "ADDON",
+                          "CONDITIONAL"
+                        ]
+                      },
+                      "priority": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "ruleId",
+                      "label",
+                      "amountMinor",
+                      "kind",
+                      "priority"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "maxItems": 20,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 200
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "actor": {
+                        "type": "string",
+                        "enum": [
+                          "HUMAN",
+                          "AGENT",
+                          "IMPORTED",
+                          "SYSTEM"
+                        ]
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "actor",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "field": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      "severity": {
+                        "type": "string",
+                        "enum": [
+                          "MISSING",
+                          "CONFLICT"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "field",
+                      "message",
+                      "severity"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "calculatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                },
+                "pricingRuleVersion": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "status",
+                "eligible",
+                "lineItems",
+                "assumptions",
+                "issues",
+                "calculatedAt"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "ref",
+        "revision",
+        "serviceSlug",
+        "goal",
+        "budgetMaxMinor",
+        "targetDeliveryDate",
+        "assumptions",
+        "answers",
+        "actor",
+        "missingFields",
+        "conflicts",
+        "quote"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
